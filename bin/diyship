@@ -4,7 +4,7 @@
 # Values
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-DIYSHIP_PATH="${DIYSHIP_PATH:-$(cd -P -- "$(dirname -- "$0")" && pwd -P)}"
+DIYSHIP_PATH="${DIYSHIP_PATH:-$(cd -P -- "$(dirname -- "$0")" && pwd -P)/diyship}"
 
 SUBCOMMAND="$1"
 
