@@ -9,7 +9,7 @@ DIYSHIP_PATH="${DIYSHIP_PATH:-$(cd -P -- "$(dirname -- "$0")" && pwd -P)/diyship
 SUBCOMMAND="$1"
 
 if [ -f "$XDG_CONFIG_HOME/diyship/info" ]; then
-	DIYSHIP_COMMAND="${DIYSHIP_COMMAND-$XDG_CONFIG_HOME/diyship/rc}"
+	DIYSHIP_COMMAND="${DIYSHIP_COMMAND:-$XDG_CONFIG_HOME/diyship/rc}"
 else
 	DIYSHIP_COMMAND="$DIYSHIP_COMMAND"
 fi
