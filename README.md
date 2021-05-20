@@ -39,11 +39,11 @@ DIY Ship
 |           [Git Status](https://starship.rs/config/#git-status)          |`#TODO`                                                                   |
 
 ### System
-|Module                                                                   |
-|-------------------------------------------------------------------------|
-|              [Battery](https://starship.rs/config/#battery)             |
-|         [Memory Usage](https://starship.rs/config/#memory-usage)        |
-|                 [Time](https://starship.rs/config/#time)                |
+|Module                                                                   |      |
+|-------------------------------------------------------------------------|------|
+|              [Battery](https://starship.rs/config/#battery)             |      |
+|         [Memory Usage](https://starship.rs/config/#memory-usage)        |      |
+|                 [Time](https://starship.rs/config/#time)                |`date`|
 
 ### Version
 |Module                                                                   |
@@ -77,18 +77,18 @@ DIY Ship
 |                  [Zig](https://starship.rs/config/#zig)                 |
 
 ### Other
-|Module                                                                   |
-|-------------------------------------------------------------------------|
-|                  [AWS](https://starship.rs/config/#aws)                 |
-|                [Conda](https://starship.rs/config/#conda)               |
-|       [Docker Context](https://starship.rs/config/#docker-context)      |
-|               [Dotnet](https://starship.rs/config/#dotnet)              |
-|[Google Cloud (gcloud)](https://starship.rs/config/#google-cloud-gcloud) |
-|           [Kubernetes](https://starship.rs/config/#kubernetes)          |
-|     [Mercurial Branch](https://starship.rs/config/#mercurial-branch)    |
-|            [Nix-shell](https://starship.rs/config/#nix-shell)           |
-|            [OpenStack](https://starship.rs/config/#openstack)           |
-|      [Package Version](https://starship.rs/config/#package-version)     |
-|          [Singularity](https://starship.rs/config/#singularity)         |
-|            [Terraform](https://starship.rs/config/#terraform)           |
-|                 [VCSH](https://starship.rs/config/#vcsh)                |
+|Module                                                                   |                           |
+|-------------------------------------------------------------------------|---------------------------|
+|                  [AWS](https://starship.rs/config/#aws)                 |                           |
+|                [Conda](https://starship.rs/config/#conda)               |`echo "$CONDA_DEFAULT_ENV"`|
+|       [Docker Context](https://starship.rs/config/#docker-context)      |                           |
+|               [Dotnet](https://starship.rs/config/#dotnet)              |                           |
+|[Google Cloud (gcloud)](https://starship.rs/config/#google-cloud-gcloud) |                           |
+|           [Kubernetes](https://starship.rs/config/#kubernetes)          |                           |
+|     [Mercurial Branch](https://starship.rs/config/#mercurial-branch)    |                           |
+|            [Nix-shell](https://starship.rs/config/#nix-shell)           |                           |
+|            [OpenStack](https://starship.rs/config/#openstack)           |                           |
+|      [Package Version](https://starship.rs/config/#package-version)     |                           |
+|          [Singularity](https://starship.rs/config/#singularity)         |                           |
+|            [Terraform](https://starship.rs/config/#terraform)           |                           |
+|                 [VCSH](https://starship.rs/config/#vcsh)                |                           |
