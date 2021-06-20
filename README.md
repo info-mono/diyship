@@ -1,9 +1,3 @@
-```
-INFO
-MONO
-```
-
-
 > *Base on [Starship v0.53.0 (2021-05-01)](https://github.com/starship/starship/releases/tag/v0.53.0)*
 
 ### Basic
@@ -19,31 +13,28 @@ MONO
 |             [Username](https://starship.rs/config/#username)            |`echo "$USER"`                                                            |
 
 ### Cross shell feature
-|Module                                                                   |
-|-------------------------------------------------------------------------|
-|            [Character](https://starship.rs/config/#character)           |
-|     [Command Duration](https://starship.rs/config/#command-duration)    |
-|                 [Jobs](https://starship.rs/config/#jobs)                |
-|                [Shell](https://starship.rs/config/#shell)               |
-|               [Status](https://starship.rs/config/#status)              |
-
-DIY Ship
-[`status2signal`](https://github.com/NNBnh/status2signal)
-
-### Git
-|Module                                                                   |                                                                          |
-|-------------------------------------------------------------------------|--------------------------------------------------------------------------|
-|           [Git Branch](https://starship.rs/config/#git-branch)          |`git rev-parse --abbrev-ref HEAD`                                         |
-|           [Git Commit](https://starship.rs/config/#git-commit)          |`git rev-parse --verify --short HEAD` and `git tag --points-at HEAD`      |
-|            [Git State](https://starship.rs/config/#git-state)           |`#TODO`                                                                   |
-|           [Git Status](https://starship.rs/config/#git-status)          |`#TODO`                                                                   |
+|Module                                                                   |                                                                                                |
+|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+|            [Character](https://starship.rs/config/#character)           |Built-in to Shell                                                                               |
+|     [Command Duration](https://starship.rs/config/#command-duration)    |Built-in to DIYship (enhance with [`ms2duration`](https://github.com/info-mono/ms2duration))    |
+|                 [Jobs](https://starship.rs/config/#jobs)                |Built-in to DIYship                                                                             |
+|                [Shell](https://starship.rs/config/#shell)               |Built-in to Shell                                                                               |
+|               [Status](https://starship.rs/config/#status)              |Built-in to DIYship (enhance with [`status2signal`](https://github.com/info-mono/status2signal))|
 
 ### System
-|Module                                                                   |      |
-|-------------------------------------------------------------------------|------|
-|              [Battery](https://starship.rs/config/#battery)             |      |
-|         [Memory Usage](https://starship.rs/config/#memory-usage)        |      |
+|Module                                                                   |                                                                                                    |
+|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
+|              [Battery](https://starship.rs/config/#battery)             |[`dwm_battery.sh`](https://github.com/joestandring/dwm-bar/blob/master/bar-functions/dwm_battery.sh)|
+|         [Memory Usage](https://starship.rs/config/#memory-usage)        |`    `|
 |                 [Time](https://starship.rs/config/#time)                |`date`|
+
+### Git
+|Module                                                                   |                                                                    |
+|-------------------------------------------------------------------------|--------------------------------------------------------------------|
+|           [Git Branch](https://starship.rs/config/#git-branch)          |`git rev-parse --abbrev-ref HEAD`                                   |
+|           [Git Commit](https://starship.rs/config/#git-commit)          |`git rev-parse --verify --short HEAD` and `git tag --points-at HEAD`|
+|            [Git State](https://starship.rs/config/#git-state)           |`#TODO`                                                             |
+|           [Git Status](https://starship.rs/config/#git-status)          |`#TODO`                                                             |
 
 ### Version
 |Module                                                                   |
