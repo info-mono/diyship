@@ -25,8 +25,8 @@
 |Module                                                                   |                                                                                                    |
 |-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
 |              [Battery](https://starship.rs/config/#battery)             |[`dwm_battery.sh`](https://github.com/joestandring/dwm-bar/blob/master/bar-functions/dwm_battery.sh)|
-|         [Memory Usage](https://starship.rs/config/#memory-usage)        |`    `|
-|                 [Time](https://starship.rs/config/#time)                |`date`|
+|         [Memory Usage](https://starship.rs/config/#memory-usage)        |`/proc/meminfo`                                                                                     |
+|                 [Time](https://starship.rs/config/#time)                |`date`                                                                                              |
 
 ### Git
 |Module                                                                   |                                                                    |
@@ -35,6 +35,10 @@
 |           [Git Commit](https://starship.rs/config/#git-commit)          |`git rev-parse --verify --short HEAD` and `git tag --points-at HEAD`|
 |            [Git State](https://starship.rs/config/#git-state)           |`#TODO`                                                             |
 |           [Git Status](https://starship.rs/config/#git-status)          |`#TODO`                                                             |
+
+- https://github.com/starship/starship/discussions/1252#discussioncomment-58920
+- https://github.com/romkatv/powerlevel10k#what-do-different-symbols-in-git-status-mean
+- https://github.com/NNBnh/dots/blob/9f8139add78b159552b0ef3bab9b3e8aceaf62d6/home/.config/starship.toml#L78-L89
 
 ### Version
 |Module                                                                   |
