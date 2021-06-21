@@ -1,4 +1,4 @@
-> *Base on [Starship v0.53.0 (2021-05-01)](https://github.com/starship/starship/releases/tag/v0.53.0)*
+> *Base on [Starship v0.55.0 (2021-06-20)](https://github.com/starship/starship/releases/tag/v0.55.0)*
 
 ### Basic
 |Module                                                                   |                                                                          |
@@ -28,6 +28,23 @@
 |         [Memory Usage](https://starship.rs/config/#memory-usage)        |`/proc/meminfo`                                                                                     |
 |                 [Time](https://starship.rs/config/#time)                |`date`                                                                                              |
 
+### Other
+|Module                                                                   |                           |
+|-------------------------------------------------------------------------|---------------------------|
+|                  [AWS](https://starship.rs/config/#aws)                 |                           |
+|                [Conda](https://starship.rs/config/#conda)               |`echo "$CONDA_DEFAULT_ENV"`|
+|       [Docker Context](https://starship.rs/config/#docker-context)      |                           |
+|               [Dotnet](https://starship.rs/config/#dotnet)              |                           |
+|[Google Cloud (gcloud)](https://starship.rs/config/#google-cloud-gcloud) |                           |
+|           [Kubernetes](https://starship.rs/config/#kubernetes)          |                           |
+|     [Mercurial Branch](https://starship.rs/config/#mercurial-branch)    |                           |
+|            [Nix-shell](https://starship.rs/config/#nix-shell)           |                           |
+|            [OpenStack](https://starship.rs/config/#openstack)           |                           |
+|      [Package Version](https://starship.rs/config/#package-version)     |                           |
+|          [Singularity](https://starship.rs/config/#singularity)         |                           |
+|            [Terraform](https://starship.rs/config/#terraform)           |                           |
+|                 [VCSH](https://starship.rs/config/#vcsh)                |                           |
+
 ### Git
 |Module                                                                   |                                                                    |
 |-------------------------------------------------------------------------|--------------------------------------------------------------------|
@@ -40,6 +57,9 @@
 - https://github.com/romkatv/powerlevel10k#what-do-different-symbols-in-git-status-mean
 - https://github.com/NNBnh/dots/blob/9f8139add78b159552b0ef3bab9b3e8aceaf62d6/home/.config/starship.toml#L78-L89
 
+<details>
+<summary>More</summary>
+  
 ### Version
 |Module                                                                   |
 |-------------------------------------------------------------------------|
@@ -63,27 +83,14 @@
 |                  [PHP](https://starship.rs/config/#php)                 |
 |           [PureScript](https://starship.rs/config/#purescript)          |
 |               [Python](https://starship.rs/config/#python)              |
+|                    [R](https://starship.rs/config/#r)                   |
 |                  [Red](https://starship.rs/config/#red)                 |
 |                 [Ruby](https://starship.rs/config/#ruby)                |
 |                 [Rust](https://starship.rs/config/#rust)                |
 |                [Scala](https://starship.rs/config/#scala)               |
 |                [Swift](https://starship.rs/config/#swift)               |
 |              [Vagrant](https://starship.rs/config/#vagrant)             |
+|                [VLang](https://starship.rs/config/#vlang)               |
 |                  [Zig](https://starship.rs/config/#zig)                 |
 
-### Other
-|Module                                                                   |                           |
-|-------------------------------------------------------------------------|---------------------------|
-|                  [AWS](https://starship.rs/config/#aws)                 |                           |
-|                [Conda](https://starship.rs/config/#conda)               |`echo "$CONDA_DEFAULT_ENV"`|
-|       [Docker Context](https://starship.rs/config/#docker-context)      |                           |
-|               [Dotnet](https://starship.rs/config/#dotnet)              |                           |
-|[Google Cloud (gcloud)](https://starship.rs/config/#google-cloud-gcloud) |                           |
-|           [Kubernetes](https://starship.rs/config/#kubernetes)          |                           |
-|     [Mercurial Branch](https://starship.rs/config/#mercurial-branch)    |                           |
-|            [Nix-shell](https://starship.rs/config/#nix-shell)           |                           |
-|            [OpenStack](https://starship.rs/config/#openstack)           |                           |
-|      [Package Version](https://starship.rs/config/#package-version)     |                           |
-|          [Singularity](https://starship.rs/config/#singularity)         |                           |
-|            [Terraform](https://starship.rs/config/#terraform)           |                           |
-|                 [VCSH](https://starship.rs/config/#vcsh)                |                           |
+</details>
