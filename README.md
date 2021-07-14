@@ -1,4 +1,4 @@
-> *Base on [Starship v0.55.0 (2021-06-20)](https://github.com/starship/starship/releases/tag/v0.55.0)*
+> *Base on [Starship v0.56.0 (2021-07-13)](https://github.com/starship/starship/releases/tag/v0.56.0)*
 
 ### Basic
 |Module                                                                   |                                                                          |
@@ -51,6 +51,7 @@
 |           [Git Branch](https://starship.rs/config/#git-branch)          |`git rev-parse --abbrev-ref HEAD`                                   |
 |           [Git Commit](https://starship.rs/config/#git-commit)          |`git rev-parse --verify --short HEAD` and `git tag --points-at HEAD`|
 |            [Git State](https://starship.rs/config/#git-state)           |`#TODO`                                                             |
+|          [Git Metrics](https://starship.rs/config/#git-metrics)         |`git diff --shortstat`                                              |
 |           [Git Status](https://starship.rs/config/#git-status)          |`#TODO`                                                             |
 
 - https://github.com/starship/starship/discussions/1252#discussioncomment-58920
