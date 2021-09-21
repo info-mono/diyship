@@ -1,4 +1,4 @@
-> *Base on [Starship v0.56.0 (2021-07-13)](https://github.com/starship/starship/releases/tag/v0.56.0)*
+> *Base on [Starship v0.58.0 (2021-09-21)](https://github.com/starship/starship/releases/tag/v0.58.0)*
 
 ### Basic
 |Module                                                                   |                                                                          |
@@ -65,6 +65,7 @@
 |Module                                                                   |
 |-------------------------------------------------------------------------|
 |                [CMake](https://starship.rs/config/#cmake)               |
+|       [COBOL/GNUCOBOL](https://starship.rs/config/#cobol-gnucobol)      |
 |              [Crystal](https://starship.rs/config/#crystal)             |
 |                 [Dart](https://starship.rs/config/#dart)                |
 |                 [Deno](https://starship.rs/config/#deno)                |
