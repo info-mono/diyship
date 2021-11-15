@@ -46,18 +46,18 @@ Add the following to the end of `~/.bashrc`:
 eval "$(diyship init bash)"
 ```
 
+### 🐚 Zsh
+Add the following to the end of `~/.zshrc`:
+
+```zsh
+source <(diyship init zsh)
+```
+
 ### 🐚 Fish
 Add the following to the end of `~/.config/fish/config.fish`:
 
 ```fish
 diyship init fish | source
-```
-
-### 🐚 Zsh
-Add the following to the end of `~/.zshrc`:
-
-```zsh
-eval "$(diyship init zsh)"
 ```
 
 ### 🐚 PowerShell
@@ -66,14 +66,7 @@ You can check the location of this file by querying the `$PROFILE` variable in P
 Typically the path is `~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1` or `~/.config/powershell/Microsoft.PowerShell_profile.ps1` on `*nix`.
 
 ```powershell
-Invoke-Expression (&diyship init powershell)
-```
-
-### 🐚 Xonsh
-Add the following to the end of `~/.xonshrc`:
-
-```xsh
-execx($(diyship init xonsh))
+Invoke-Expression (@(&diyship init powershell) -join "`n")
 ```
 
 ### 🐚 Ion
@@ -109,6 +102,13 @@ startup = [
 	"source ~/.cache/diyship/init.nu"
 ]
 prompt = "diyship_prompt"
+```
+
+### 🐚 Xonsh
+Add the following to the end of `~/.xonshrc`:
+
+```xsh
+execx($(diyship init xonsh))
 ```
 
 > *Only Nushell version v0.33 or higher is supported.*

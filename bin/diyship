@@ -2,66 +2,10 @@
 
 
 # Values
-XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-
 DIYSHIP_PATH="${DIYSHIP_PATH:-$(cd -P -- "$(dirname -- "$0")" && pwd -P)/diyship}"
 
-SUBCOMMAND="$1"
-
-if [ -f "$XDG_CONFIG_HOME/diyship/info" ]; then
-	DIYSHIP_COMMAND="${DIYSHIP_COMMAND:-$XDG_CONFIG_HOME/diyship/rc}"
-else
-	DIYSHIP_COMMAND="$DIYSHIP_COMMAND"
-fi
-
-
-# Start
-case "$SUBCOMMAND" in
-	'init')
-		CURRENT_SHELL="$2"
-		FLAG="$3"
-
-		case "$FLAG" in
-			'')
-				case "$CURRENT_SHELL" in
-					'bash')
-						printf '%s' "if [ \"\${BASH_VERSINFO[0]}\" -gt 4 ] || ([ \"\${BASH_VERSINFO[0]}\" -eq 4 ] && [ \"\${BASH_VERSINFO[1]}\" -ge 1 ])
-then
-	source <(\"$DIYSHIP_PATH\" init bash --print-full-init)
-else
-	source /dev/stdin <<<\"\$(\"$DIYSHIP_PATH\" init bash --print-full-init)\"
-fi"
-					;;
-					'zsh')
-						printf '%s' "source <(\"$DIYSHIP_PATH\" init zsh --print-full-init)"
-					;;
-					'fish')
-						printf '%s' "source (\"$DIYSHIP_PATH\" init fish --print-full-init | psub)"
-					;;
-					'powershell')
-						printf '%s' "Invoke-Expression (@(&\"$DIYSHIP_PATH\" init powershell --print-full-init) -join \"\`n\")"
-					;;
-					'ion')
-						printf '%s' "eval \$($DIYSHIP_PATH init ion --print-full-init)"
-					;;
-					'elvish')
-						printf '%s' "eval (\"$DIYSHIP_PATH\" init elvish --print-full-init | slurp)"
-					;;
-					'tcsh')
-						printf '%s' "eval \"\`(\"$DIYSHIP_PATH\" init tcsh --print-full-init)\`\""
-					;;
-					'')
-						printf '%s' "diyship: shell were not provided" >&2
-					;;
-					*)
-						printf '%s' "diyship: '$CURRENT_SHELL' is not supported by diyship" >&2
-					;;
-				esac
-			;;
-			'--print-full-init')
-				case "$CURRENT_SHELL" in
-					'bash')
-						printf '%s' "# We use PROMPT_COMMAND and the DEBUG trap to generate timing information. We try
+BASH_INIT="
+# We use PROMPT_COMMAND and the DEBUG trap to generate timing information. We try
 # to avoid clobbering what we can, and try to give the user ways around our
 # clobbers, if it's unavoidable. For example, PROMPT_COMMAND is appended to,
 # and the DEBUG trap is layered with other traps, if it exists.
@@ -159,10 +103,11 @@ export DIYSHIP_SHELL=\"bash\"
 # Set up the session key that will be used to store logs
 DIYSHIP_SESSION_KEY=\"\$RANDOM\$RANDOM\$RANDOM\$RANDOM\$RANDOM\"; # Random generates a number b/w 0 - 32767
 DIYSHIP_SESSION_KEY=\"\${DIYSHIP_SESSION_KEY}0000000000000000\" # Pad it to 16+ chars.
-export DIYSHIP_SESSION_KEY=\${DIYSHIP_SESSION_KEY:0:16}; # Trim to 16-digits if excess."
-					;;
-					'zsh')
-						printf '%s' "# ZSH has a quirk where \`preexec\` is only run if a command is actually run (i.e
+export DIYSHIP_SESSION_KEY=\${DIYSHIP_SESSION_KEY:0:16}; # Trim to 16-digits if excess.
+"
+
+ZSH_INIT="
+# ZSH has a quirk where \`preexec\` is only run if a command is actually run (i.e
 # pressing ENTER at an empty command line will not cause preexec to fire). This
 # can cause timing issues, as a user who presses \"ENTER\" without running a command
 # will see the time to the start of the last command, which may be very large.
@@ -250,10 +195,11 @@ export DIYSHIP_SESSION_KEY=\${DIYSHIP_SESSION_KEY:0:16}; # Trim to 16-digits if 
 VIRTUAL_ENV_DISABLE_PROMPT=1
 
 setopt prompt{percent,subst}
-PROMPT='\$(\"$DIYSHIP_PATH\" prompt --keymap=\${KEYMAP} --status=\${DIYSHIP_CMD_STATUS} --cmd-duration=\${DIYSHIP_DURATION} --jobs=%j)'"
-					;;
-					'fish')
-						printf '%s' "function fish_prompt
+PROMPT='\$(\"$DIYSHIP_PATH\" prompt --keymap=\${KEYMAP} --status=\${DIYSHIP_CMD_STATUS} --cmd-duration=\${DIYSHIP_DURATION} --jobs=%j)'
+"
+
+FISH_INIT="
+function fish_prompt
 	switch \"\$fish_key_bindings\"
 		case fish_hybrid_key_bindings fish_vi_key_bindings
 			set keymap \"\$fish_bind_mode\"
@@ -273,10 +219,11 @@ function fish_mode_prompt; end
 set -gx DIYSHIP_SHELL \"fish\"
 
 # Set up the session key that will be used to store logs
-set -gx DIYSHIP_SESSION_KEY (random 10000000000000 9999999999999999)"
-					;;
-					'powershell')
-						printf '%s' "#!/usr/bin/env pwsh
+set -gx DIYSHIP_SESSION_KEY (random 10000000000000 9999999999999999)
+"
+
+POWERSHELL_INIT="
+#!/usr/bin/env pwsh
 
 function global:prompt {
 
@@ -405,10 +352,11 @@ function global:prompt {
 \$ENV:DIYSHIP_SHELL = \"powershell\"
 
 # Set up the session key that will be used to store logs
-\$ENV:DIYSHIP_SESSION_KEY = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 16 | ForEach-Object { [char]\$_ })"
-					;;
-					'ion')
-						printf '%s' "# The PROMPT function is called whenever a prompt needs to be drawn. Docs: https://doc.redox-os.org/ion-manual/html/misc/06-prompt_fn.html
+\$ENV:DIYSHIP_SESSION_KEY = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 16 | ForEach-Object { [char]\$_ })
+"
+
+ION_INIT="
+# The PROMPT function is called whenever a prompt needs to be drawn. Docs: https://doc.redox-os.org/ion-manual/html/misc/06-prompt_fn.html
 fn PROMPT
 	# Save the status immediately, since the status is also updated after variable assignment, etc.
 	let DIYSHIP_ION_STATUS = \$?
@@ -427,10 +375,11 @@ end
 export DIYSHIP_SHELL=\"ion\"
 
 # Set up the session key that will be used to store logs
-export DIYSHIP_SESSION_KEY=\$(\"$DIYSHIP_PATH\" session)"
-					;;
-					'elvish')
-						printf '%s' "set-env DIYSHIP_SHELL \"elvish\"
+export DIYSHIP_SESSION_KEY=\$(\"$DIYSHIP_PATH\" session)
+"
+
+ELVISH_INIT="
+set-env DIYSHIP_SHELL \"elvish\"
 set-env DIYSHIP_SESSION_KEY (\"$DIYSHIP_PATH\" session)
 
 # Define Hooks
@@ -462,10 +411,11 @@ edit:prompt = {
 }
 
 # Get rid of default rprompt
-edit:rprompt = { }"
-					;;
-					'tcsh')
-						printf '%s' "setenv DIYSHIP_SHELL tcsh;
+edit:rprompt = { }
+"
+
+TCSH_INIT="
+setenv DIYSHIP_SHELL tcsh;
 setenv DIYSHIP_SESSION_KEY \`\"$DIYSHIP_PATH\" session\`;
 set USER_PRECMD = \"\`alias precmd\`\";
 set USER_POSTCMD = \"\`alias postcmd\`\";
@@ -473,22 +423,55 @@ set DIYSHIP_PRECMD = 'set DIYSHIP_CMD_STATUS = \$status;set DIYSHIP_PATH = \"$DI
 set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`\"$DIYSHIP_PATH\" time\`';
 alias precmd \"\$DIYSHIP_PRECMD;\$USER_PRECMD\";
 alias postcmd \"\$DIYSHIP_POSTCMD;\$USER_POSTCMD\";
-set DIYSHIP_START_TIME = \`\"$DIYSHIP_PATH\" time\`;"
-					;;
-					'')
-						printf '%s' "diyship: shell were not provided" >&2
-					;;
-					*)
-						printf '%s' "diyship: '$CURRENT_SHELL' is not supported by diyship" >&2
-					;;
-				esac
-			;;
-			*)
-				printf '%s' "diyship: invalid flag -- '$FLAG'
-Try 'diyship help' for more information." >&2
+set DIYSHIP_START_TIME = \`\"$DIYSHIP_PATH\" time\`;
+"
 
-				exit 1
-			;;
+NUSHELL_INIT="
+let-env DIYSHIP_SHELL = \"nu\"
+let-env DIYSHIP_SESSION_KEY = (random chars -l 16)
+
+def diyship_prompt [] {
+    # jobs are not supported
+    # status is not supported
+    ^$DIYSHIP_PATH prompt --cmd-duration \$nu.env.CMD_DURATION_MS
+}
+"
+
+XONSH_INIT="
+import uuid
+
+def diyship_prompt():
+    last_cmd = __xonsh__.history[-1] if __xonsh__.history else None
+    status = last_cmd.rtn if last_cmd else 0
+    # I believe this is equivalent to xonsh.jobs.get_next_job_number() for our purposes,
+    # but we can't use that function because of https://gitter.im/xonsh/xonsh?at=60e8832d82dd9050f5e0c96a
+    jobs = sum(1 for job in __xonsh__.all_jobs.values() if job['obj'] and job['obj'].poll() is None)
+    duration = round((last_cmd.ts[1] - last_cmd.ts[0]) * 1000) if last_cmd else 0
+    # The \`| cat\` is a workaround for https://github.com/xonsh/xonsh/issues/3786. See https://github.com/starship/starship/pull/2807#discussion_r667316323.
+    return \$($DIYSHIP_PATH prompt --status=@(status) --jobs=@(jobs) --cmd-duration=@(duration) | cat)
+
+\$PROMPT = diyship_prompt
+\$DIYSHIP_SHELL = \"xonsh\"
+\$DIYSHIP_SESSION_KEY = uuid.uuid4().hex
+"
+
+
+# Start
+case "$1" in
+	'init')
+		case "$2" in
+			'bash')       printf '%s'       "$BASH_INIT" ;;
+			'zsh')        printf '%s'        "$ZSH_INIT" ;;
+			'fish')       printf '%s'       "$FISH_INIT" ;;
+			'powershell') printf '%s' "$POWERSHELL_INIT" ;;
+			'ion')        printf '%s'        "$ION_INIT" ;;
+			'elvish')     printf '%s'     "$ELVISH_INIT" ;;
+			'tcsh')       printf '%s'       "$TCSH_INIT" ;;
+			'nushell')    printf '%s'    "$NUSHELL_INIT" ;;
+			'xonsh')      printf '%s'      "$XONSH_INIT" ;;
+
+			'') printf '%s\n' "diyship: shell were not provided"                      >&2 ;;
+			*)  printf '%s\n' "diyship: '$CURRENT_SHELL' is not supported by diyship" >&2 ;;
 		esac
 	;;
 	'prompt')
@@ -503,52 +486,21 @@ Try 'diyship help' for more information." >&2
 			fi
 
 			case "$option" in
-				'-P='*)
-					export DIYSHIP_CWD="${option#-P=}"
-				;;
-				'--logical-path='*)
-					export DIYSHIP_CWD="${option#--logical-path=}"
-				;;
-				'-p='*)
-					export DIYSHIP_CWD="${option#-p=}"
-				;;
-				'--path='*)
-					export DIYSHIP_CWD="${option#--path=}"
-				;;
-				'-s='*)
-					export DIYSHIP_STATUS="${option#-s=}"
-				;;
-				'--status='*)
-					export DIYSHIP_STATUS="${option#--status=}"
-				;;
-				'-d='*)
-					export DIYSHIP_DURATION="${option#-d=}"
-				;;
-				'--cmd-duration='*)
-					export DIYSHIP_DURATION="${option#--cmd-duration=}"
-				;;
-				'-j='*)
-					export DIYSHIP_JOBS="${option#-j=}"
-				;;
-				'--jobs='*)
-					export DIYSHIP_JOBS="${option#--jobs=}"
-				;;
-				'-k='*)
-					export DIYSHIP_KEYMAP="${option#-k=}"
-				;;
-				'--keymap='*)
-					export DIYSHIP_KEYMAP="${option#--keymap=}"
-				;;
+				'--path='*)         export DIYSHIP_CWD="${option#--path=}"              ;;
+				'--logical-path='*) export DIYSHIP_CWD="${option#--logical-path=}"      ;;
+				'--status='*)       export DIYSHIP_STATUS="${option#--status=}"         ;;
+				'--cmd-duration='*) export DIYSHIP_DURATION="${option#--cmd-duration=}" ;;
+				'--jobs='*)         export DIYSHIP_JOBS="${option#--jobs=}"             ;;
+				'--keymap='*)       export DIYSHIP_KEYMAP="${option#--keymap=}"         ;;
 				*)
-					printf '%s' "diyship: invalid flag -- '$FLAG'
-Try 'diyship help' for more information." >&2
+					printf '%s\n%s\n' "diyship: invalid flag -- '$FLAG' 'Try 'diyship help' for more information." >&2
 
 					exit 1
 				;;
 			esac
 		done
 
-		eval "$DIYSHIP_COMMAND"
+		eval "${DIYSHIP_COMMAND:-${XDG_CONFIG_HOME:-$HOME/.config}/diyship/rc}"
 	;;
 	'time')
 		date +%s%N | cut -c '-13'
@@ -556,21 +508,22 @@ Try 'diyship help' for more information." >&2
 	'session')
 		head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16'
 	;;
-	'help'|'--help'|'-h'|'') #TODO
-		printf "\033[1mDIYship\033[0m
+	'help'|'--help'|'-h'|'-?'|'') #TODO
+		printf '%b' "
+\033[1mDIYship\033[0m
 
 \033[1mUsage:\033[0m
     diyship SUBCOMMAND
 
-  init       prints the shell function used to execute starship
-  prompt     prints the full starship prompt
+  init       prints the shell function used to execute diyship
+  prompt     prints the full diyship prompt
   time       prints time in milliseconds
   session    generate random session key
-  help       display this help and exit"
+  help       display this help and exit
+"
 	;;
 	*)
-		printf '%s' "diyship: invalid subcommand -- '$SUBCOMMAND'
-Try 'diyship help' for more information." >&2
+		printf '%s\n%s\n' "diyship: invalid subcommand -- '$SUBCOMMAND' 'Try 'diyship help' for more information." >&2
 
 		exit 1
 	;;
