@@ -27,7 +27,7 @@ diyship_preexec() {
 	# Avoid restarting the timer for commands in the same pipeline
 	if [ \"\$DIYSHIP_PREEXEC_READY\" = \"true\" ]; then
 		DIYSHIP_PREEXEC_READY=false
-		DIYSHIP_START_TIME=\$(\"$DIYSHIP_PATH\" time)
+		DIYSHIP_START_TIME=\$(date +%s%N | cut -c '-13')
 	fi
 
 	: \"\$PREV_LAST_ARG\"
@@ -51,12 +51,12 @@ diyship_precmd() {
 
 	# Prepare the timer data, if needed.
 	if [[ \$DIYSHIP_START_TIME ]]; then
-		DIYSHIP_END_TIME=\$(\"$DIYSHIP_PATH\" time)
+		DIYSHIP_END_TIME=\$(date +%s%N | cut -c '-13')
 		DIYSHIP_DURATION=\$((DIYSHIP_END_TIME - DIYSHIP_START_TIME))
-		PS1=\"\$(\"$DIYSHIP_PATH\" prompt --status=\$DIYSHIP_CMD_STATUS --jobs=\"\$NUM_JOBS\" --cmd-duration=\$DIYSHIP_DURATION)\"
+		PS1=\"\$(\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_CMD_STATUS --jobs=\"\$NUM_JOBS\" --cmd-duration=\$DIYSHIP_DURATION)\"
 		unset DIYSHIP_START_TIME
 	else
-		PS1=\"\$(\"$DIYSHIP_PATH\" prompt --status=\$DIYSHIP_CMD_STATUS --jobs=\"\$NUM_JOBS\")\"
+		PS1=\"\$(\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_CMD_STATUS --jobs=\"\$NUM_JOBS\")\"
 	fi
 	DIYSHIP_PREEXEC_READY=true  # Signal that we can safely restart the timer
 }
@@ -97,7 +97,7 @@ else
 fi
 
 # Set up the start time and DIYSHIP_SHELL, which controls shell-specific sequences
-DIYSHIP_START_TIME=\$(\"$DIYSHIP_PATH\" time)
+DIYSHIP_START_TIME=\$(date +%s%N | cut -c '-13')
 export DIYSHIP_SHELL=\"bash\"
 
 # Set up the session key that will be used to store logs
@@ -120,7 +120,7 @@ ZSH_INIT="
 if [[ \$ZSH_VERSION == ([1-4]*) ]]; then
 	# ZSH <= 5; Does not have a built-in variable so we will rely on DIYship's inbuilt time function.
 	__diyship_get_time() {
-		DIYSHIP_CAPTURED_TIME=\$(\"$DIYSHIP_PATH\" time)
+		DIYSHIP_CAPTURED_TIME=\$(date +%s%N | cut -c '-13')
 	}
 else
 	zmodload zsh/datetime
@@ -195,7 +195,7 @@ export DIYSHIP_SESSION_KEY=\${DIYSHIP_SESSION_KEY:0:16}; # Trim to 16-digits if 
 VIRTUAL_ENV_DISABLE_PROMPT=1
 
 setopt prompt{percent,subst}
-PROMPT='\$(\"$DIYSHIP_PATH\" prompt --keymap=\${KEYMAP} --status=\${DIYSHIP_CMD_STATUS} --cmd-duration=\${DIYSHIP_DURATION} --jobs=%j)'
+PROMPT='\$(\"$DIYSHIP_PATH\" PROMPT --keymap=\${KEYMAP} --status=\${DIYSHIP_CMD_STATUS} --cmd-duration=\${DIYSHIP_DURATION} --jobs=%j)'
 "
 
 FISH_INIT="
@@ -209,7 +209,7 @@ function fish_prompt
 	set -l exit_code \$status
 	# Account for changes in variable name between v2.7 and v3.0
 	set -l diyship_duration \"\$CMD_DURATION\$cmd_duration\"
-	\"$DIYSHIP_PATH\" prompt --status=\$exit_code --keymap=\$keymap --cmd-duration=\$diyship_duration --jobs=(count (jobs -p))
+	\"$DIYSHIP_PATH\" PROMPT --status=\$exit_code --keymap=\$keymap --cmd-duration=\$diyship_duration --jobs=(count (jobs -p))
 end
 
 # disable virtualenv prompt, it breaks diyship
@@ -295,7 +295,7 @@ function global:prompt {
 
 	\$cwd = Get-Cwd
 	\$arguments = @(
-		\"prompt\"
+		\"PROMPT\"
 		\"--path=\$(\$cwd.Path)\",
 		\"--logical-path=\$(\$cwd.LogicalPath)\",
 		\"--jobs=\$(\$jobs)\"
@@ -356,7 +356,7 @@ function global:prompt {
 "
 
 ION_INIT="
-# The PROMPT function is called whenever a prompt needs to be drawn. Docs: https://doc.redox-os.org/ion-manual/html/misc/06-prompt_fn.html
+# The prompt function is called whenever a prompt needs to be drawn. Docs: https://doc.redox-os.org/ion-manual/html/misc/06-prompt_fn.html
 fn PROMPT
 	# Save the status immediately, since the status is also updated after variable assignment, etc.
 	let DIYSHIP_ION_STATUS = \$?
@@ -368,30 +368,30 @@ fn PROMPT
 
 	# The DIYSHIP between the colons will be replaced with the actual path to the diyship executable.
 	# The jobs command outputs to stderr, therefore we need to pipe stderr to `wc -l`.
-	\"$DIYSHIP_PATH\" prompt --status=\$DIYSHIP_ION_STATUS --jobs=\$(jobs ^| wc -l) --cmd-duration=\$DIYSHIP_ION_CMD_DURATION
+	\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_ION_STATUS --jobs=\$(jobs ^| wc -l) --cmd-duration=\$DIYSHIP_ION_CMD_DURATION
 end
 
 # Export the correct name of the shell
 export DIYSHIP_SHELL=\"ion\"
 
 # Set up the session key that will be used to store logs
-export DIYSHIP_SESSION_KEY=\$(\"$DIYSHIP_PATH\" session)
+export DIYSHIP_SESSION_KEY=\$(head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16')
 "
 
 ELVISH_INIT="
 set-env DIYSHIP_SHELL \"elvish\"
-set-env DIYSHIP_SESSION_KEY (\"$DIYSHIP_PATH\" session)
+set-env DIYSHIP_SESSION_KEY (head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16')
 
 # Define Hooks
 local:cmd-start-time = 0
 local:cmd-end-time = 0
 
 fn diyship-after-readline-hook [line]{
-	cmd-start-time = (\"$DIYSHIP_PATH\" time)
+	cmd-start-time = (date +%s%N | cut -c '-13')
 }
 
 fn diyship-before-readline-hook {
-	cmd-end-time = (\"$DIYSHIP_PATH\" time)
+	cmd-end-time = (date +%s%N | cut -c '-13')
 }
 
 # Install Hooks
@@ -404,9 +404,9 @@ edit:prompt = {
 	# Elvish does not appear to support exit status codes (--status)
 
 	if (== \$cmd-start-time 0) {
-		\"$DIYSHIP_PATH\" prompt --jobs=\$num-bg-jobs
+		\"$DIYSHIP_PATH\" PROMPT --jobs=\$num-bg-jobs
 	} else {
-		\"$DIYSHIP_PATH\" prompt --jobs=\$num-bg-jobs --cmd-duration=(- \$cmd-end-time \$cmd-start-time)
+		\"$DIYSHIP_PATH\" PROMPT --jobs=\$num-bg-jobs --cmd-duration=(- \$cmd-end-time \$cmd-start-time)
 	}
 }
 
@@ -416,14 +416,14 @@ edit:rprompt = { }
 
 TCSH_INIT="
 setenv DIYSHIP_SHELL tcsh;
-setenv DIYSHIP_SESSION_KEY \`\"$DIYSHIP_PATH\" session\`;
+setenv DIYSHIP_SESSION_KEY \`head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16'\`;
 set USER_PRECMD = \"\`alias precmd\`\";
 set USER_POSTCMD = \"\`alias postcmd\`\";
-set DIYSHIP_PRECMD = 'set DIYSHIP_CMD_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_PATH\";set DIYSHIP_END_TIME = \`\$DIYSHIP_PATH time\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_PATH prompt --status=\$DIYSHIP_CMD_STATUS --cmd-duration=\$DIYSHIP_DURATION\`\";set DIYSHIP_START_TIME = -1';
-set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`\"$DIYSHIP_PATH\" time\`';
+set DIYSHIP_PRECMD = 'set DIYSHIP_CMD_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_PATH\";set DIYSHIP_END_TIME = \`date +%s%N | cut -c '-13'\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_PATH PROMPT --status=\$DIYSHIP_CMD_STATUS --cmd-duration=\$DIYSHIP_DURATION\`\";set DIYSHIP_START_TIME = -1';
+set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`date +%s%N | cut -c '-13'\`';
 alias precmd \"\$DIYSHIP_PRECMD;\$USER_PRECMD\";
 alias postcmd \"\$DIYSHIP_POSTCMD;\$USER_POSTCMD\";
-set DIYSHIP_START_TIME = \`\"$DIYSHIP_PATH\" time\`;
+set DIYSHIP_START_TIME = \`date +%s%N | cut -c '-13'\`;
 "
 
 NUSHELL_INIT="
@@ -433,7 +433,7 @@ let-env DIYSHIP_SESSION_KEY = (random chars -l 16)
 def diyship_prompt [] {
     # jobs are not supported
     # status is not supported
-    ^$DIYSHIP_PATH prompt --cmd-duration \$nu.env.CMD_DURATION_MS
+    ^$DIYSHIP_PATH PROMPT --cmd-duration \$nu.env.CMD_DURATION_MS
 }
 "
 
@@ -448,7 +448,7 @@ def diyship_prompt():
     jobs = sum(1 for job in __xonsh__.all_jobs.values() if job['obj'] and job['obj'].poll() is None)
     duration = round((last_cmd.ts[1] - last_cmd.ts[0]) * 1000) if last_cmd else 0
     # The \`| cat\` is a workaround for https://github.com/xonsh/xonsh/issues/3786. See https://github.com/starship/starship/pull/2807#discussion_r667316323.
-    return \$($DIYSHIP_PATH prompt --status=@(status) --jobs=@(jobs) --cmd-duration=@(duration) | cat)
+    return \$($DIYSHIP_PATH PROMPT --status=@(status) --jobs=@(jobs) --cmd-duration=@(duration) | cat)
 
 \$PROMPT = diyship_prompt
 \$DIYSHIP_SHELL = \"xonsh\"
@@ -458,23 +458,16 @@ def diyship_prompt():
 
 # Start
 case "$1" in
-	'init')
-		case "$2" in
-			'bash')       printf '%s'       "$BASH_INIT" ;;
-			'zsh')        printf '%s'        "$ZSH_INIT" ;;
-			'fish')       printf '%s'       "$FISH_INIT" ;;
-			'powershell') printf '%s' "$POWERSHELL_INIT" ;;
-			'ion')        printf '%s'        "$ION_INIT" ;;
-			'elvish')     printf '%s'     "$ELVISH_INIT" ;;
-			'tcsh')       printf '%s'       "$TCSH_INIT" ;;
-			'nushell')    printf '%s'    "$NUSHELL_INIT" ;;
-			'xonsh')      printf '%s'      "$XONSH_INIT" ;;
-
-			'') printf '%s\n' "diyship: shell were not provided"                      >&2 ;;
-			*)  printf '%s\n' "diyship: '$CURRENT_SHELL' is not supported by diyship" >&2 ;;
-		esac
-	;;
-	'prompt')
+	'bash')       printf '%s'       "$BASH_INIT" ;;
+	'zsh')        printf '%s'        "$ZSH_INIT" ;;
+	'fish')       printf '%s'       "$FISH_INIT" ;;
+	'powershell') printf '%s' "$POWERSHELL_INIT" ;;
+	'ion')        printf '%s'        "$ION_INIT" ;;
+	'elvish')     printf '%s'     "$ELVISH_INIT" ;;
+	'tcsh')       printf '%s'       "$TCSH_INIT" ;;
+	'nushell')    printf '%s'    "$NUSHELL_INIT" ;;
+	'xonsh')      printf '%s'      "$XONSH_INIT" ;;
+	'PROMPT')
 		export DIYSHIP_SESSION_KEY="$DIYSHIP_SESSION_KEY"
 		export DIYSHIP_SHELL="$DIYSHIP_SHELL"
 
@@ -486,44 +479,19 @@ case "$1" in
 			fi
 
 			case "$option" in
-				'--path='*)         export DIYSHIP_CWD="${option#--path=}"              ;;
-				'--logical-path='*) export DIYSHIP_CWD="${option#--logical-path=}"      ;;
-				'--status='*)       export DIYSHIP_STATUS="${option#--status=}"         ;;
-				'--cmd-duration='*) export DIYSHIP_DURATION="${option#--cmd-duration=}" ;;
-				'--jobs='*)         export DIYSHIP_JOBS="${option#--jobs=}"             ;;
-				'--keymap='*)       export DIYSHIP_KEYMAP="${option#--keymap=}"         ;;
-				*)
-					printf '%s\n%s\n' "diyship: invalid flag -- '$FLAG' 'Try 'diyship help' for more information." >&2
-
-					exit 1
-				;;
+				'--path='*)         export DIYSHIP_CWD="${option#--path=}"                  ;;
+				'--logical-path='*) export DIYSHIP_LOGICAL_PATH="${option#--logical-path=}" ;;
+				'--status='*)       export DIYSHIP_STATUS="${option#--status=}"             ;;
+				'--cmd-duration='*) export DIYSHIP_DURATION="${option#--cmd-duration=}"     ;;
+				'--jobs='*)         export DIYSHIP_JOBS="${option#--jobs=}"                 ;;
+				'--keymap='*)       export DIYSHIP_KEYMAP="${option#--keymap=}"             ;;
 			esac
 		done
 
 		eval "${DIYSHIP_COMMAND:-${XDG_CONFIG_HOME:-$HOME/.config}/diyship/rc}"
 	;;
-	'time')
-		date +%s%N | cut -c '-13'
-	;;
-	'session')
-		head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16'
-	;;
-	'help'|'--help'|'-h'|'-?'|'') #TODO
-		printf '%b' "
-\033[1mDIYship\033[0m
-
-\033[1mUsage:\033[0m
-    diyship SUBCOMMAND
-
-  init       prints the shell function used to execute diyship
-  prompt     prints the full diyship prompt
-  time       prints time in milliseconds
-  session    generate random session key
-  help       display this help and exit
-"
-	;;
 	*)
-		printf '%s\n%s\n' "diyship: invalid subcommand -- '$SUBCOMMAND' 'Try 'diyship help' for more information." >&2
+		printf '%s\n' "diyship: invalid shell -- '$SUBCOMMAND'" >&2
 
 		exit 1
 	;;

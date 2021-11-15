@@ -43,21 +43,21 @@ basher install info-mono/diyship
 Add the following to the end of `~/.bashrc`:
 
 ```bash
-eval "$(diyship init bash)"
+eval "$(diyship bash)"
 ```
 
 ### 🐚 Zsh
 Add the following to the end of `~/.zshrc`:
 
 ```zsh
-source <(diyship init zsh)
+source <(diyship zsh)
 ```
 
 ### 🐚 Fish
 Add the following to the end of `~/.config/fish/config.fish`:
 
 ```fish
-diyship init fish | source
+diyship fish | source
 ```
 
 ### 🐚 PowerShell
@@ -66,21 +66,21 @@ You can check the location of this file by querying the `$PROFILE` variable in P
 Typically the path is `~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1` or `~/.config/powershell/Microsoft.PowerShell_profile.ps1` on `*nix`.
 
 ```powershell
-Invoke-Expression (@(&diyship init powershell) -join "`n")
+Invoke-Expression (@(&diyship powershell) -join "`n")
 ```
 
 ### 🐚 Ion
 Add the following to the end of `~/.config/ion/initrc`:
 
 ```ion
-eval $(diyship init ion)
+eval $(diyship ion)
 ```
 
 ### 🐚 Elvish
 Add the following to the end of `~/.elvish/rc.elv`:
 
 ```elv
-eval (diyship init elvish)
+eval (diyship elvish)
 ```
 
 > *Only Elvish v0.15 or higher is supported.*
@@ -89,7 +89,7 @@ eval (diyship init elvish)
 Add the following to the end of `~/.tcshrc`:
 
 ```tcsh
-eval `diyship init tcsh`
+eval `diyship tcsh`
 ```
 
 ### 🐚 Nushell
@@ -98,7 +98,7 @@ Add the following to your Nushell config file. You can check the location of thi
 ```toml
 startup = [
 	"mkdir ~/.cache/diyship",
-	"diyship init nu | save ~/.cache/diyship/init.nu",
+	"diyship nushell | save ~/.cache/diyship/init.nu",
 	"source ~/.cache/diyship/init.nu"
 ]
 prompt = "diyship_prompt"
@@ -108,7 +108,7 @@ prompt = "diyship_prompt"
 Add the following to the end of `~/.xonshrc`:
 
 ```xsh
-execx($(diyship init xonsh))
+execx($(diyship xonsh))
 ```
 
 > *Only Nushell version v0.33 or higher is supported.*
