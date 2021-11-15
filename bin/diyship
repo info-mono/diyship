@@ -2,7 +2,10 @@
 
 
 # Values
-DIYSHIP_PATH="${DIYSHIP_PATH:-$(cd -P -- "$(dirname -- "$0")" && pwd -P)/diyship}"
+DIYSHIP_PATH="$(cd -P -- "$(dirname -- "$0")" && pwd -P)/diyship" #TODO
+
+TIME_COMMAND="date +%s%N | cut -c '-13'"
+SESSION_COMMAND="head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16'"
 
 BASH_INIT="
 # We use PROMPT_COMMAND and the DEBUG trap to generate timing information. We try
@@ -27,7 +30,7 @@ diyship_preexec() {
 	# Avoid restarting the timer for commands in the same pipeline
 	if [ \"\$DIYSHIP_PREEXEC_READY\" = \"true\" ]; then
 		DIYSHIP_PREEXEC_READY=false
-		DIYSHIP_START_TIME=\$(date +%s%N | cut -c '-13')
+		DIYSHIP_START_TIME=\$($TIME_COMMAND)
 	fi
 
 	: \"\$PREV_LAST_ARG\"
@@ -51,7 +54,7 @@ diyship_precmd() {
 
 	# Prepare the timer data, if needed.
 	if [[ \$DIYSHIP_START_TIME ]]; then
-		DIYSHIP_END_TIME=\$(date +%s%N | cut -c '-13')
+		DIYSHIP_END_TIME=\$($TIME_COMMAND)
 		DIYSHIP_DURATION=\$((DIYSHIP_END_TIME - DIYSHIP_START_TIME))
 		PS1=\"\$(\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_CMD_STATUS --jobs=\"\$NUM_JOBS\" --cmd-duration=\$DIYSHIP_DURATION)\"
 		unset DIYSHIP_START_TIME
@@ -97,7 +100,7 @@ else
 fi
 
 # Set up the start time and DIYSHIP_SHELL, which controls shell-specific sequences
-DIYSHIP_START_TIME=\$(date +%s%N | cut -c '-13')
+DIYSHIP_START_TIME=\$($TIME_COMMAND)
 export DIYSHIP_SHELL=\"bash\"
 
 # Set up the session key that will be used to store logs
@@ -120,7 +123,7 @@ ZSH_INIT="
 if [[ \$ZSH_VERSION == ([1-4]*) ]]; then
 	# ZSH <= 5; Does not have a built-in variable so we will rely on DIYship's inbuilt time function.
 	__diyship_get_time() {
-		DIYSHIP_CAPTURED_TIME=\$(date +%s%N | cut -c '-13')
+		DIYSHIP_CAPTURED_TIME=\$($TIME_COMMAND)
 	}
 else
 	zmodload zsh/datetime
@@ -367,7 +370,7 @@ fn PROMPT
 	let DIYSHIP_ION_CMD_DURATION = \$((DIYSHIP_ION_CMD_DURATION * 1000))
 
 	# The DIYSHIP between the colons will be replaced with the actual path to the diyship executable.
-	# The jobs command outputs to stderr, therefore we need to pipe stderr to `wc -l`.
+	# The jobs command outputs to stderr, therefore we need to pipe stderr to \`wc -l\`.
 	\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_ION_STATUS --jobs=\$(jobs ^| wc -l) --cmd-duration=\$DIYSHIP_ION_CMD_DURATION
 end
 
@@ -375,23 +378,23 @@ end
 export DIYSHIP_SHELL=\"ion\"
 
 # Set up the session key that will be used to store logs
-export DIYSHIP_SESSION_KEY=\$(head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16')
+export DIYSHIP_SESSION_KEY=\$($SESSION_COMMAND)
 "
 
 ELVISH_INIT="
 set-env DIYSHIP_SHELL \"elvish\"
-set-env DIYSHIP_SESSION_KEY (head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16')
+set-env DIYSHIP_SESSION_KEY ($SESSION_COMMAND)
 
 # Define Hooks
 local:cmd-start-time = 0
 local:cmd-end-time = 0
 
 fn diyship-after-readline-hook [line]{
-	cmd-start-time = (date +%s%N | cut -c '-13')
+	cmd-start-time = ($TIME_COMMAND)
 }
 
 fn diyship-before-readline-hook {
-	cmd-end-time = (date +%s%N | cut -c '-13')
+	cmd-end-time = ($TIME_COMMAND)
 }
 
 # Install Hooks
@@ -416,14 +419,14 @@ edit:rprompt = { }
 
 TCSH_INIT="
 setenv DIYSHIP_SHELL tcsh;
-setenv DIYSHIP_SESSION_KEY \`head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16'\`;
+setenv DIYSHIP_SESSION_KEY \`$SESSION_COMMAND\`;
 set USER_PRECMD = \"\`alias precmd\`\";
 set USER_POSTCMD = \"\`alias postcmd\`\";
-set DIYSHIP_PRECMD = 'set DIYSHIP_CMD_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_PATH\";set DIYSHIP_END_TIME = \`date +%s%N | cut -c '-13'\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_PATH PROMPT --status=\$DIYSHIP_CMD_STATUS --cmd-duration=\$DIYSHIP_DURATION\`\";set DIYSHIP_START_TIME = -1';
-set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`date +%s%N | cut -c '-13'\`';
+set DIYSHIP_PRECMD = 'set DIYSHIP_CMD_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_PATH\";set DIYSHIP_END_TIME = \`$TIME_COMMAND\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_PATH PROMPT --status=\$DIYSHIP_CMD_STATUS --cmd-duration=\$DIYSHIP_DURATION\`\";set DIYSHIP_START_TIME = -1';
+set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`$TIME_COMMAND\`';
 alias precmd \"\$DIYSHIP_PRECMD;\$USER_PRECMD\";
 alias postcmd \"\$DIYSHIP_POSTCMD;\$USER_POSTCMD\";
-set DIYSHIP_START_TIME = \`date +%s%N | cut -c '-13'\`;
+set DIYSHIP_START_TIME = \`$TIME_COMMAND\`;
 "
 
 NUSHELL_INIT="
