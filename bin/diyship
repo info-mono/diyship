@@ -2,32 +2,16 @@
 
 
 # Values
-DIYSHIP_PATH="$(cd -P -- "$(dirname -- "$0")" && pwd -P)/diyship" #TODO
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+DIYSHIP_COMMAND_LEFT="${DIYSHIP_COMMAND_LEFT:-$XDG_CONFIG_HOME/diyship/left}"
+DIYSHIP_COMMAND_RIGHT="${DIYSHIP_COMMAND_RIGHT:-$XDG_CONFIG_HOME/diyship/right}"
 
 TIME_COMMAND="date +%s%N | cut -c '-13'"
-SESSION_COMMAND="head '/dev/urandom' | tr -d -c '[:alnum:]' | cut -c '-16'"
 
 BASH_INIT="
-# We use PROMPT_COMMAND and the DEBUG trap to generate timing information. We try
-# to avoid clobbering what we can, and try to give the user ways around our
-# clobbers, if it's unavoidable. For example, PROMPT_COMMAND is appended to,
-# and the DEBUG trap is layered with other traps, if it exists.
-
-# A bash quirk is that the DEBUG trap is fired every time a command runs, even
-# if it's later on in the pipeline. If uncorrected, this could cause bad timing
-# data for commands like \`slow | slow | fast\`, since the timer starts at the start
-# of the \"fast\" command.
-
-# To solve this, we set a flag \`DIYSHIP_PREEXEC_READY\` when the prompt is
-# drawn, and only start the timer if this flag is present. That way, timing is
-# for the entire command, and not just a portion of it.
-
-# Will be run before *every* command (even ones in pipes!)
 diyship_preexec() {
-	# Save previous command's last argument, otherwise it will be set to \"diyship_preexec\"
 	local PREV_LAST_ARG=\$1
 
-	# Avoid restarting the timer for commands in the same pipeline
 	if [ \"\$DIYSHIP_PREEXEC_READY\" = \"true\" ]; then
 		DIYSHIP_PREEXEC_READY=false
 		DIYSHIP_START_TIME=\$($TIME_COMMAND)
@@ -36,46 +20,42 @@ diyship_preexec() {
 	: \"\$PREV_LAST_ARG\"
 }
 
-# Will be run before the prompt is drawn
 diyship_precmd() {
-	# Save the status, because commands in this pipeline will change \$?
-	DIYSHIP_CMD_STATUS=\$?
+	export DIYSHIP_STATUS=\$?
 
-	local NUM_JOBS=0
-	# Evaluate the number of jobs before running the preseved prompt command, so that tools
-	# like z/autojump, which background certain jobs, do not cause spurious background jobs
-	# to be displayed by diyship. Also avoids forking to run \`wc\`, slightly improving perf.
-	for job in \$(jobs -p); do [[ \$job ]] && ((NUM_JOBS++)); done
+	DIYSHIP_PIPESTATUS=(\${PIPESTATUS[@]})
+	if [[ \"\${#BP_PIPESTATUS[@]}\" -gt \"\${#DIYSHIP_PIPESTATUS[@]}\" ]]; then
+		DIYSHIP_PIPESTATUS=(\${BP_PIPESTATUS[@]})
+	fi
+	export DIYSHIP_PIPESTATUS=\"\${DIYSHIP_PIPESTATUS[@]}\"
 
-	# Run the bash precmd function, if it's set. If not set, evaluates to no-op
+	DIYSHIP_JOBS=0
+	for job in \$(jobs -p); do
+		[[ \$job ]] && ((DIYSHIP_JOBS++))
+	done
+	export DIYSHIP_JOBS=\"\$DIYSHIP_JOBS\"
+
 	\"\${diyship_precmd_user_func-:}\"
 
 	eval \"\$_PRESERVED_PROMPT_COMMAND\"
 
-	# Prepare the timer data, if needed.
 	if [[ \$DIYSHIP_START_TIME ]]; then
 		DIYSHIP_END_TIME=\$($TIME_COMMAND)
-		DIYSHIP_DURATION=\$((DIYSHIP_END_TIME - DIYSHIP_START_TIME))
-		PS1=\"\$(\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_CMD_STATUS --jobs=\"\$NUM_JOBS\" --cmd-duration=\$DIYSHIP_DURATION)\"
-		unset DIYSHIP_START_TIME
-	else
-		PS1=\"\$(\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_CMD_STATUS --jobs=\"\$NUM_JOBS\")\"
+		export DIYSHIP_DURATION=\$((DIYSHIP_END_TIME - DIYSHIP_START_TIME))
 	fi
-	DIYSHIP_PREEXEC_READY=true  # Signal that we can safely restart the timer
+
+	PS1=\"\$($DIYSHIP_COMMAND_LEFT)\"
+
+	unset DIYSHIP_START_TIME
+	DIYSHIP_PREEXEC_READY=true
 }
 
-# If the user appears to be using https://github.com/rcaloras/bash-preexec,
-# then hook our functions into their framework.
 if [[ \"\${__bp_imported:-}\" == \"defined\" || \$preexec_functions || \$precmd_functions ]]; then
-	# bash-preexec needs a single function--wrap the args into a closure and pass
 	diyship_preexec_all(){ diyship_preexec \"\$_\"; }
 	preexec_functions+=(diyship_preexec_all)
 	precmd_functions+=(diyship_precmd)
 else
-	# We want to avoid destroying an existing DEBUG hook. If we detect one, create
-	# a new function that runs both the existing function AND our function, then
-	# re-trap DEBUG to use this new function. This prevents a trap clobber.
-	dbg_trap=\"\$(trap -p DEBUG | cut -d' ' -f3 | tr -d \\')\"
+	dbg_trap=\"\$(trap -p DEBUG | cut -d' ' -f3 | tr -d \')\"
 	if [[ -z \"\$dbg_trap\" ]]; then
 		trap 'diyship_preexec \"\$_\"' DEBUG
 	elif [[ \"\$dbg_trap\" != 'diyship_preexec \"\$_\"' && \"\$dbg_trap\" != 'diyship_preexec_all \"\$_\"' ]]; then
@@ -85,43 +65,23 @@ else
 		trap 'diyship_preexec_all \"\$_\"' DEBUG
 	fi
 
-	# Finally, prepare the precmd function and set up the start time. We will avoid to
-	# add multiple instances of the diyship function and keep other user functions if any.
 	if [[ -z \"\$PROMPT_COMMAND\" ]]; then
 		PROMPT_COMMAND=\"diyship_precmd\"
 	elif [[ \"\$PROMPT_COMMAND\" != *\"diyship_precmd\"* ]]; then
-		# Appending to PROMPT_COMMAND breaks exit status (\$?) checking.
-		# Prepending to PROMPT_COMMAND breaks \"command duration\" module.
-		# So, we are preserving the existing PROMPT_COMMAND
-		# which will be executed later in the diyship_precmd function
 		_PRESERVED_PROMPT_COMMAND=\"\$PROMPT_COMMAND\"
 		PROMPT_COMMAND=\"diyship_precmd\"
 	fi
 fi
 
-# Set up the start time and DIYSHIP_SHELL, which controls shell-specific sequences
 DIYSHIP_START_TIME=\$($TIME_COMMAND)
-export DIYSHIP_SHELL=\"bash\"
 
-# Set up the session key that will be used to store logs
-DIYSHIP_SESSION_KEY=\"\$RANDOM\$RANDOM\$RANDOM\$RANDOM\$RANDOM\"; # Random generates a number b/w 0 - 32767
-DIYSHIP_SESSION_KEY=\"\${DIYSHIP_SESSION_KEY}0000000000000000\" # Pad it to 16+ chars.
-export DIYSHIP_SESSION_KEY=\${DIYSHIP_SESSION_KEY:0:16}; # Trim to 16-digits if excess.
+export DIYSHIP_SHELL=\"bash\"
 "
 
 ZSH_INIT="
-# ZSH has a quirk where \`preexec\` is only run if a command is actually run (i.e
-# pressing ENTER at an empty command line will not cause preexec to fire). This
-# can cause timing issues, as a user who presses \"ENTER\" without running a command
-# will see the time to the start of the last command, which may be very large.
+zmodload zsh/parameter
 
-# To fix this, we create DIYSHIP_START_TIME upon preexec() firing, and destroy it
-# after drawing the prompt. This ensures that the timing for one command is only
-# ever drawn once (for the prompt immediately after it is run).
-
-# Defines a function \`__diyship_get_time\` that sets the time since epoch in millis in DIYSHIP_CAPTURED_TIME.
 if [[ \$ZSH_VERSION == ([1-4]*) ]]; then
-	# ZSH <= 5; Does not have a built-in variable so we will rely on DIYship's inbuilt time function.
 	__diyship_get_time() {
 		DIYSHIP_CAPTURED_TIME=\$($TIME_COMMAND)
 	}
@@ -133,54 +93,44 @@ else
 	}
 fi
 
-# Will be run before every prompt draw
 diyship_precmd() {
-	# Save the status, because commands in this pipeline will change \$?
-	DIYSHIP_CMD_STATUS=\$?
+	export DIYSHIP_STATUS=\$?
+	export DIYSHIP_PIPESTATUS=\"\${pipestatus[@]}\"
 
-	# Compute cmd_duration, if we have a time to consume, otherwise clear the
-	# previous duration
 	if (( \${+DIYSHIP_START_TIME} )); then
-		__diyship_get_time && (( DIYSHIP_DURATION = DIYSHIP_CAPTURED_TIME - DIYSHIP_START_TIME ))
+		__diyship_get_time && (( DIYSHIP_DURATION = DIYSHIP_CAPTURED_TIME - DIYSHIP_START_TIME )) && export DIYSHIP_DURATION=\"\$DIYSHIP_DURATION\"
+
 		unset DIYSHIP_START_TIME
 	else
 		unset DIYSHIP_DURATION
 	fi
+
+	export DIYSHIP_JOBS=\${#jobstates}
 }
 diyship_preexec() {
 	__diyship_get_time && DIYSHIP_START_TIME=\$DIYSHIP_CAPTURED_TIME
 }
 
-# If precmd/preexec arrays are not already set, set them. If we don't do this,
-# the code to detect whether diyship_precmd is already in precmd_functions will
-# fail because the array doesn't exist (and same for diyship_preexec)
 (( ! \${+precmd_functions} )) && precmd_functions=()
 (( ! \${+preexec_functions} )) && preexec_functions=()
 
-# If diyship precmd/preexec functions are already hooked, don't double-hook them
-# to avoid unnecessary performance degradation in nested shells
 if [[ -z \${precmd_functions[(re)diyship_precmd]} ]]; then
 	precmd_functions+=(diyship_precmd)
 fi
-if [[ -z \${preexec_function[(re)diyship_preexec]} ]]; then
+if [[ -z \${preexec_functions[(re)diyship_preexec]} ]]; then
 	preexec_functions+=(diyship_preexec)
 fi
 
-# Set up a function to redraw the prompt if the user switches vi modes
 diyship_zle-keymap-select() {
 	zle reset-prompt
 }
 
-## Check for existing keymap-select widget.
-local existing_keymap_select_fn=\$widgets[zle-keymap-select];
-# zle-keymap-select is a special widget so it'll be \"user:fnName\" or nothing. Let's get fnName only.
-existing_keymap_select_fn=\${existing_keymap_select_fn//user:};
-if [[ -z \${existing_keymap_select_fn} ]]; then
+__diyship_preserved_zle_keymap_select=\${widgets[zle-keymap-select]#user:}
+if [[ -z \$__diyship_preserved_zle_keymap_select ]]; then
 	zle -N zle-keymap-select diyship_zle-keymap-select;
 else
-	# Define a wrapper fn to call the original widget fn and then DIYship's.
 	diyship_zle-keymap-select-wrapped() {
-		\${existing_keymap_select_fn} \"\$@\";
+		\$__diyship_preserved_zle_keymap_select \"\$@\";
 		diyship_zle-keymap-select \"\$@\";
 	}
 	zle -N zle-keymap-select diyship_zle-keymap-select-wrapped;
@@ -190,65 +140,44 @@ __diyship_get_time && DIYSHIP_START_TIME=\$DIYSHIP_CAPTURED_TIME
 
 export DIYSHIP_SHELL=\"zsh\"
 
-# Set up the session key that will be used to store logs
-DIYSHIP_SESSION_KEY=\"\$RANDOM\$RANDOM\$RANDOM\$RANDOM\$RANDOM\"; # Random generates a number b/w 0 - 32767
-DIYSHIP_SESSION_KEY=\"\${DIYSHIP_SESSION_KEY}0000000000000000\" # Pad it to 16+ chars.
-export DIYSHIP_SESSION_KEY=\${DIYSHIP_SESSION_KEY:0:16}; # Trim to 16-digits if excess.
-
 VIRTUAL_ENV_DISABLE_PROMPT=1
 
-setopt prompt{percent,subst}
-PROMPT='\$(\"$DIYSHIP_PATH\" PROMPT --keymap=\${KEYMAP} --status=\${DIYSHIP_CMD_STATUS} --cmd-duration=\${DIYSHIP_DURATION} --jobs=%j)'
-"
+setopt promptsubst
+PROMPT='\$($DIYSHIP_COMMAND_LEFT)'
+RPROMPT='\$($DIYSHIP_COMMAND_RIGHT)'"
 
 FISH_INIT="
 function fish_prompt
+	set -gx DIYSHIP_STATUS \$status
+	set -gx DIYSHIP_PIPESTATUS \$pipestatus
+	set -gx DIYSHIP_DURATION \"\$CMD_DURATION\$cmd_duration\"
+	set -gx DIYSHIP_JOBS (count (jobs -p))
+
 	switch \"\$fish_key_bindings\"
 		case fish_hybrid_key_bindings fish_vi_key_bindings
-			set keymap \"\$fish_bind_mode\"
+			set -gx DIYSHIP_KEYMAP \"\$fish_bind_mode\"
 		case '*'
-			set keymap insert
+			set -gx DIYSHIP_KEYMAP insert
 	end
-	set -l exit_code \$status
-	# Account for changes in variable name between v2.7 and v3.0
-	set -l diyship_duration \"\$CMD_DURATION\$cmd_duration\"
-	\"$DIYSHIP_PATH\" PROMPT --status=\$exit_code --keymap=\$keymap --cmd-duration=\$diyship_duration --jobs=(count (jobs -p))
+
+	$DIYSHIP_COMMAND_LEFT
 end
 
-# disable virtualenv prompt, it breaks diyship
-set VIRTUAL_ENV_DISABLE_PROMPT 1
+function fish_right_prompt
+	$DIYSHIP_COMMAND_RIGHT
+end
 
-function fish_mode_prompt; end
+set -g VIRTUAL_ENV_DISABLE_PROMPT 1
+
+builtin functions -e fish_mode_prompt
+
 set -gx DIYSHIP_SHELL \"fish\"
-
-# Set up the session key that will be used to store logs
-set -gx DIYSHIP_SESSION_KEY (random 10000000000000 9999999999999999)
 "
 
 POWERSHELL_INIT="
 #!/usr/bin/env pwsh
 
 function global:prompt {
-
-	function Get-Cwd {
-		\$cwd = Get-Location
-		\$provider_prefix = \"\$(\$cwd.Provider.ModuleName)\\\$(\$cwd.Provider.Name)::\"
-		return @{
-			# Resolve the actual/physical path
-			# NOTE: ProviderPath is only a physical filesystem path for the \"FileSystem\" provider
-			# E.g. \`Dev:\\\` -> \`C:\\Users\\Joe Bloggs\\Dev\\\`
-			Path = \$cwd.ProviderPath;
-			# Resolve the provider-logical path 
-			# NOTE: Attempt to trim any \"provider prefix\" from the path string.
-			# E.g. \`Microsoft.PowerShell.Core\\FileSystem::Dev:\\\` -> \`Dev:\\\`
-			LogicalPath =
-				if (\$cwd.Path.StartsWith(\$provider_prefix)) {
-					\$cwd.Path.Substring(\$provider_prefix.Length)
-				} else {
-					\$cwd.Path
-				};
-		}
-	}
 
 	function Invoke-Native {
 		param(\$Executable, \$Arguments)
@@ -259,31 +188,23 @@ function global:prompt {
 		\$startInfo.CreateNoWindow = \$true;
 		\$startInfo.UseShellExecute = \$false;
 		if (\$startInfo.ArgumentList.Add) {
-			# PowerShell 6+ uses .NET 5+ and supports the ArgumentList property
-			# which bypasses the need for manually escaping the argument list into
-			# a command string.
 			foreach (\$arg in \$Arguments) {
 				\$startInfo.ArgumentList.Add(\$arg);
 			}
 		}
 		else {
-			# Build an arguments string which follows the C++ command-line argument quoting rules
-			# See: https://docs.microsoft.com/en-us/previous-versions//17w5ykft(v=vs.85)?redirectedfrom=MSDN
 			\$escaped = \$Arguments | ForEach-Object {
-				\$s = \$_ -Replace '(\\\\+)\"','\$1\$1\"'; # Escape backslash chains immediately preceeding quote marks.
-				\$s = \$s -Replace '(\\\\+)\$','\$1\$1';  # Escape backslash chains immediately preceeding the end of the string.
-				\$s = \$s -Replace '\"','\\\"';         # Escape quote marks.
-				\"\`\"\$s\`\"\"                           # Quote the argument.
+				\$s = \$_ -Replace '(\\+)\"','\$1\$1\"';
+				\$s = \$s -Replace '(\\+)\$','\$1\$1';
+				\$s = \$s -Replace '\"','\\\"';
+				\"\`\"\$s\`\"\"
 			}
 			\$startInfo.Arguments = \$escaped -Join ' ';
 		}
 		\$process = [System.Diagnostics.Process]::Start(\$startInfo)
 
-		# stderr isn't displayed with this style of invocation
-		# Manually write it to console
 		\$stderr = \$process.StandardError.ReadToEnd().Trim()
 		if (\$stderr -ne '') {
-			# Write-Error doesn't work here
 			\$host.ui.WriteErrorLine(\$stderr)
 		}
 
@@ -293,101 +214,56 @@ function global:prompt {
 	\$origDollarQuestion = \$global:?
 	\$origLastExitCode = \$global:LASTEXITCODE
 
-	# @ makes sure the result is an array even if single or no values are returned
-	\$jobs = @(Get-Job | Where-Object { \$_.State -eq 'Running' }).Count
+	\$ENV:DIYSHIP_JOBS = @(Get-Job | Where-Object { \$_.State -eq 'Running' }).Count
 
-	\$cwd = Get-Cwd
-	\$arguments = @(
-		\"PROMPT\"
-		\"--path=\$(\$cwd.Path)\",
-		\"--logical-path=\$(\$cwd.LogicalPath)\",
-		\"--jobs=\$(\$jobs)\"
-	)
-
-	# Whe start from the premise that the command executed correctly, which covers also the fresh console.
-	\$lastExitCodeForPrompt = 0
+	\$ENV:DIYSHIP_STATUS = 0
 	if (\$lastCmd = Get-History -Count 1) {
-		# In case we have a False on the Dollar hook, we know there's an error.
 		if (-not \$origDollarQuestion) {
-			# We retrieve the InvocationInfo from the most recent error.
-			\$lastCmdletError = try { Get-Error |  Where-Object { \$_ -ne \$null } | Select-Object -expand InvocationInfo } catch { \$null }
-			# We check if the last command executed matches the line that caused the last error, in which case we know
-			# it was an internal Powershell command, otherwise, there MUST be an error code.
-			\$lastExitCodeForPrompt = if (\$null -ne \$lastCmdletError -and \$lastCmd.CommandLine -eq \$lastCmdletError.Line) { 1 } else { \$origLastExitCode }
+			\$lastCmdletError = try { \$error[0] |  Where-Object { \$_ -ne \$null } | Select-Object -ExpandProperty InvocationInfo } catch { \$null }
+			\$ENV:DIYSHIP_STATUS = if (\$null -ne \$lastCmdletError -and \$lastCmd.CommandLine -eq \$lastCmdletError.Line) { 1 } else { \$origLastExitCode }
 		}
-		\$duration = [math]::Round((\$lastCmd.EndExecutionTime - \$lastCmd.StartExecutionTime).TotalMilliseconds)
-
-		\$arguments += \"--cmd-duration=\$(\$duration)\"
+		\$ENV:DIYSHIP_DURATION = [math]::Round((\$lastCmd.EndExecutionTime - \$lastCmd.StartExecutionTime).TotalMilliseconds)
 	}
 
-	\$arguments += \"--status=\$(\$lastExitCodeForPrompt)\"
+	Invoke-Native -Executable '$DIYSHIP_COMMAND_LEFT'
 
-	# Invoke DIYship
-	Invoke-Native -Executable \"$DIYSHIP_PATH\" -Arguments \$arguments
-
-	# Propagate the original \$LASTEXITCODE from before the prompt function was invoked.
 	\$global:LASTEXITCODE = \$origLastExitCode
 
-	# Propagate the original \$? automatic variable value from before the prompt function was invoked.
-	#
-	# \$? is a read-only or constant variable so we can't directly override it.
-	# In order to propagate up its original boolean value we will take an action
-	# which will produce the desired value.
-	#
-	# This has to be the very last thing that happens in the prompt function
-	# since every PowerShell command sets the \$? variable.
 	if (\$global:? -ne \$origDollarQuestion) {
 		if (\$origDollarQuestion) {
-			 # Simple command which will execute successfully and set \$? = True without any other side affects.
 			1+1
 		} else {
-			# Write-Error will set \$? to False.
-			# ErrorAction Ignore will prevent the error from being added to the \$Error collection.
 			Write-Error '' -ErrorAction 'Ignore'
 		}
 	}
 
 }
 
-# Disable virtualenv prompt, it breaks diyship
-\$ENV:VIRTUAL_ENV_DISABLE_PROMPT=1
+\$ENV:VIRTUAL_ENV_DISABLE_PROMPT = 1
 
 \$ENV:DIYSHIP_SHELL = \"powershell\"
-
-# Set up the session key that will be used to store logs
-\$ENV:DIYSHIP_SESSION_KEY = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 16 | ForEach-Object { [char]\$_ })
 "
 
 ION_INIT="
-# The prompt function is called whenever a prompt needs to be drawn. Docs: https://doc.redox-os.org/ion-manual/html/misc/06-prompt_fn.html
 fn PROMPT
-	# Save the status immediately, since the status is also updated after variable assignment, etc.
-	let DIYSHIP_ION_STATUS = \$?
-	# Save the ION_CMD_DURATION before running any other commands, but after the status since the
-	# duration is not updated during variable assignment
-	# Account for variable name change sometime during December 2019 - January 2020
-	let DIYSHIP_ION_CMD_DURATION = \$or(\$CMD_DURATION \$ION_CMD_DURATION)
-	let DIYSHIP_ION_CMD_DURATION = \$((DIYSHIP_ION_CMD_DURATION * 1000))
+	export DIYSHIP_STATUS = \$?
+	export DIYSHIP_DURATION = \$or(\$CMD_DURATION \$ION_CMD_DURATION)
+	export DIYSHIP_DURATION = \$((DIYSHIP_DURATION * 1000))
+	export DIYSHIP_JOBS = \$(jobs ^| wc -l)
 
-	# The DIYSHIP between the colons will be replaced with the actual path to the diyship executable.
-	# The jobs command outputs to stderr, therefore we need to pipe stderr to \`wc -l\`.
-	\"$DIYSHIP_PATH\" PROMPT --status=\$DIYSHIP_ION_STATUS --jobs=\$(jobs ^| wc -l) --cmd-duration=\$DIYSHIP_ION_CMD_DURATION
+	$DIYSHIP_COMMAND_LEFT
 end
 
-# Export the correct name of the shell
 export DIYSHIP_SHELL=\"ion\"
-
-# Set up the session key that will be used to store logs
-export DIYSHIP_SESSION_KEY=\$($SESSION_COMMAND)
 "
 
 ELVISH_INIT="
 set-env DIYSHIP_SHELL \"elvish\"
-set-env DIYSHIP_SESSION_KEY ($SESSION_COMMAND)
 
 # Define Hooks
 local:cmd-start-time = 0
 local:cmd-end-time = 0
+local:cmd-duration = 0
 
 fn diyship-after-readline-hook [line]{
 	cmd-start-time = ($TIME_COMMAND)
@@ -395,69 +271,75 @@ fn diyship-after-readline-hook [line]{
 
 fn diyship-before-readline-hook {
 	cmd-end-time = ($TIME_COMMAND)
+	cmd-duration = (- \$cmd-end-time \$cmd-start-time)
 }
 
-# Install Hooks
 edit:after-readline = [ \$@edit:after-readline \$diyship-after-readline-hook~ ]
 edit:before-readline = [ \$@edit:before-readline \$diyship-before-readline-hook~ ]
 
-# Install diyship
 edit:prompt = {
-	# Note:
-	# Elvish does not appear to support exit status codes (--status)
+	set-env DIYSHIP_JOBS \$num-bg-jobs
 
 	if (== \$cmd-start-time 0) {
-		\"$DIYSHIP_PATH\" PROMPT --jobs=\$num-bg-jobs
+		$DIYSHIP_COMMAND_LEFT
 	} else {
-		\"$DIYSHIP_PATH\" PROMPT --jobs=\$num-bg-jobs --cmd-duration=(- \$cmd-end-time \$cmd-start-time)
+		set-env DIYSHIP_DURATION \$cmd-duration
+
+		$DIYSHIP_COMMAND_LEFT
 	}
 }
 
-# Get rid of default rprompt
-edit:rprompt = { }
-"
+edit:rprompt = {
+	set-env DIYSHIP_JOBS \$num-bg-jobs
+
+	if (== \$cmd-start-time 0) {
+		$DIYSHIP_COMMAND_RIGHT
+	} else {
+		set-env DIYSHIP_DURATION \$cmd-duration
+
+		$DIYSHIP_COMMAND_RIGHT
+	}
+}"
 
 TCSH_INIT="
 setenv DIYSHIP_SHELL tcsh;
-setenv DIYSHIP_SESSION_KEY \`$SESSION_COMMAND\`;
+
 set USER_PRECMD = \"\`alias precmd\`\";
 set USER_POSTCMD = \"\`alias postcmd\`\";
-set DIYSHIP_PRECMD = 'set DIYSHIP_CMD_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_PATH\";set DIYSHIP_END_TIME = \`$TIME_COMMAND\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_PATH PROMPT --status=\$DIYSHIP_CMD_STATUS --cmd-duration=\$DIYSHIP_DURATION\`\";set DIYSHIP_START_TIME = -1';
+
+set DIYSHIP_PRECMD = 'set DIYSHIP_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_COMMAND_LEFT\";set DIYSHIP_END_TIME = \`$TIME_COMMAND\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_COMMAND_LEFT\`\";set DIYSHIP_START_TIME = -1';
 set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`$TIME_COMMAND\`';
+
 alias precmd \"\$DIYSHIP_PRECMD;\$USER_PRECMD\";
 alias postcmd \"\$DIYSHIP_POSTCMD;\$USER_POSTCMD\";
+
 set DIYSHIP_START_TIME = \`$TIME_COMMAND\`;
 "
 
 NUSHELL_INIT="
 let-env DIYSHIP_SHELL = \"nu\"
-let-env DIYSHIP_SESSION_KEY = (random chars -l 16)
 
 def diyship_prompt [] {
-    # jobs are not supported
-    # status is not supported
-    ^$DIYSHIP_PATH PROMPT --cmd-duration \$nu.env.CMD_DURATION_MS
+	let-env DIYSHIP_DURATION = \$nu.env.CMD_DURATION_MS
+
+	^$DIYSHIP_COMMAND_LEFT PROMPT --cmd-duration \$nu.env.CMD_DURATION_MS
 }
 "
 
 XONSH_INIT="
-import uuid
-
 def diyship_prompt():
-    last_cmd = __xonsh__.history[-1] if __xonsh__.history else None
-    status = last_cmd.rtn if last_cmd else 0
-    # I believe this is equivalent to xonsh.jobs.get_next_job_number() for our purposes,
-    # but we can't use that function because of https://gitter.im/xonsh/xonsh?at=60e8832d82dd9050f5e0c96a
-    jobs = sum(1 for job in __xonsh__.all_jobs.values() if job['obj'] and job['obj'].poll() is None)
-    duration = round((last_cmd.ts[1] - last_cmd.ts[0]) * 1000) if last_cmd else 0
-    # The \`| cat\` is a workaround for https://github.com/xonsh/xonsh/issues/3786. See https://github.com/starship/starship/pull/2807#discussion_r667316323.
-    return \$($DIYSHIP_PATH PROMPT --status=@(status) --jobs=@(jobs) --cmd-duration=@(duration) | cat)
+	last_cmd = __xonsh__.history[-1] if __xonsh__.history else None
+
+	\$DIYSHIP_STATUS = last_cmd.rtn if last_cmd else 0
+	\$DIYSHIP_DURATION = round((last_cmd.ts[1] - last_cmd.ts[0]) * 1000) if last_cmd else 0
+	\$DIYSHIP_JOBS = sum(1 for job in __xonsh__.all_jobs.values() if job['obj'] and job['obj'].poll() is None)
+
+	return \$($DIYSHIP_COMMAND_LEFT | cat)
 
 \$PROMPT = diyship_prompt
-\$DIYSHIP_SHELL = \"xonsh\"
-\$DIYSHIP_SESSION_KEY = uuid.uuid4().hex
-"
 
+\$DIYSHIP_SHELL = \"xonsh\"
+"
 
 # Start
 case "$1" in
@@ -470,29 +352,6 @@ case "$1" in
 	'tcsh')       printf '%s'       "$TCSH_INIT" ;;
 	'nushell')    printf '%s'    "$NUSHELL_INIT" ;;
 	'xonsh')      printf '%s'      "$XONSH_INIT" ;;
-	'PROMPT')
-		export DIYSHIP_SESSION_KEY="$DIYSHIP_SESSION_KEY"
-		export DIYSHIP_SHELL="$DIYSHIP_SHELL"
-
-		for option in "$@"; do
-			if [ "$subcommand_checked" != 'true' ] && [ "$option" = "$SUBCOMMAND" ]; then
-				subcommand_checked='true'
-
-				continue
-			fi
-
-			case "$option" in
-				'--path='*)         export DIYSHIP_CWD="${option#--path=}"                  ;;
-				'--logical-path='*) export DIYSHIP_LOGICAL_PATH="${option#--logical-path=}" ;;
-				'--status='*)       export DIYSHIP_STATUS="${option#--status=}"             ;;
-				'--cmd-duration='*) export DIYSHIP_DURATION="${option#--cmd-duration=}"     ;;
-				'--jobs='*)         export DIYSHIP_JOBS="${option#--jobs=}"                 ;;
-				'--keymap='*)       export DIYSHIP_KEYMAP="${option#--keymap=}"             ;;
-			esac
-		done
-
-		eval "${DIYSHIP_COMMAND:-${XDG_CONFIG_HOME:-$HOME/.config}/diyship/rc}"
-	;;
 	*)
 		printf '%s\n' "diyship: invalid shell -- '$SUBCOMMAND'" >&2
 
