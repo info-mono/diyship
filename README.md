@@ -138,7 +138,8 @@ execx($(diyship xonsh))
 ## ⚙️ Configuration
 
 DIYship is basically execute a command (which could be a path to an **executable** script file or program) and take it output as a prompt,
-you can change the command through environment variable: `export DIYSHIP_COMMAND_<POSITION>="<command>"`
+you can change the command through environment variable:<br>
+`export DIYSHIP_COMMAND_<POSITION>="<command>"`
 
 | Environment variable    | Default                          | Description                   |
 | ----------------------- | -------------------------------- | ----------------------------- |
