@@ -6,6 +6,8 @@
 
 **DIYship** is a cross-shell prompt framework written in [`portable sh`](https://github.com/dylanaraps/pure-sh-bible) that let you write your prompt with any programing language for any shell.
 
+> _[Learn more about how its work](#%EF%B8%8F-configuration)._
+
 ## 🚀 Setup
 
 ### 🧾 Dependencies
@@ -46,7 +48,9 @@ basher install info-mono/diyship
 
 > _If you can and want to port DIYship to other package managers, feel free to do so._
 
-## 🐚 Shell integrate
+## ⌨️ Usage
+
+Add the init script to your shell's config file:
 
 ### 🐚 Bash
 
@@ -133,7 +137,38 @@ execx($(diyship xonsh))
 
 ## ⚙️ Configuration
 
-`#TODO`
+DIYship is basically execute a command (which could be a path to an **executable** script file or program) and take it output as a prompt,
+you can change the command through environment variable: `export DIYSHIP_COMMAND_<POSITION>="<command>"`
+
+| Environment variable    | Default                          | Description                   |
+| ----------------------- | -------------------------------- | ----------------------------- |
+| `DIYSHIP_COMMAND_LEFT`  | `$XDG_CONFIG_HOME/diyship/left`  | Command to print left prompt  |
+| `DIYSHIP_COMMAND_RIGHT` | `$XDG_CONFIG_HOME/diyship/right` | Command to print right prompt |
+
+DIYship will export these following environment variables before running the commands to print out prompts,
+so you could utilize theme informations in your script/program:
+
+| Environment variable  | Description                                                   |
+| --------------------- | ------------------------------------------------------------- |
+| `$DIYSHIP_SHELL`      | Current shell name.                                           |
+| `$DIYSHIP_STATUS`     | The status code of the previously run command.                |
+| `$DIYSHIP_PIPESTATUS` | Status codes from a command pipeline.                         |
+| `$DIYSHIP_DURATION`   | The execution duration of the last command (in milliseconds). |
+| `$DIYSHIP_JOBS`       | The number of currently running jobs                          |
+| `$DIYSHIP_KEYMAP`     | The current keymap.                                           |
+
+Do to many technical limitation, not every shell support all the features:
+
+| Feature              | Bash | Zsh | Fish | Powershell | Ion | Elvish | Tcsh | Nushell | Xonsh |
+| -------------------- | ---- | --- | ---- | ---------- | --- | ------ | ---- | ------- | ----- |
+| Left prompt          | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     | ✅   | ✅      | ✅    |
+| Right prompt         |      | ✅  | ✅   |            |     | ✅     |      |         |       |
+| Export current shell | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     | ✅   | ✅      | ✅    |
+| Export status        | ✅   | ✅  | ✅   | ✅         | ✅  |        | ✅   |         | ✅    |
+| Export pipe status   | ✅   | ✅  | ✅   |            |     |        |      |         |       |
+| Export duration      | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     | ✅   | ✅      | ✅    |
+| Export jobs          | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     |      |         | ✅    |
+| Export keymap        |      | ✅  | ✅   |            |     |        |      |         |       |
 
 ## 💌 Credits
 
@@ -145,4 +180,4 @@ This project was heavily based on and inspired by [**Starship**](https://starshi
 
 > <h1 align="center">Made with ❤️ by <a href="https://github.com/NNBnh"><i>NNB</i></a></h1>
 >
-> <p align="center"><a href="https://www.buymeacoffee.com/nnbnh"><img src="https://img.shields.io/badge/buy_me_a_coffee%20-%23F7CA88.svg?logo=buy-me-a-coffee&logoColor=333333&style=for-the-badge" alt="Buy Me a Coffee"></a></p>
+> <p align="center"><a href="https://www.buymeacoffee.com/nnbnh"><img src="https://img.shields.io/badge/buy_me_a_coffee%20-%23FFC387.svg?logo=buy-me-a-coffee&logoColor=333333&style=for-the-badge" alt="Buy Me a Coffee"></a></p>

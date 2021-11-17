@@ -6,15 +6,13 @@ XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DIYSHIP_COMMAND_LEFT="${DIYSHIP_COMMAND_LEFT:-$XDG_CONFIG_HOME/diyship/left}"
 DIYSHIP_COMMAND_RIGHT="${DIYSHIP_COMMAND_RIGHT:-$XDG_CONFIG_HOME/diyship/right}"
 
-TIME_COMMAND="date +%s%N | cut -c '-13'"
-
 BASH_INIT="
 diyship_preexec() {
 	local PREV_LAST_ARG=\$1
 
 	if [ \"\$DIYSHIP_PREEXEC_READY\" = \"true\" ]; then
 		DIYSHIP_PREEXEC_READY=false
-		DIYSHIP_START_TIME=\$($TIME_COMMAND)
+		DIYSHIP_START_TIME=\$(date +%s%N)
 	fi
 
 	: \"\$PREV_LAST_ARG\"
@@ -40,7 +38,7 @@ diyship_precmd() {
 	eval \"\$_PRESERVED_PROMPT_COMMAND\"
 
 	if [[ \$DIYSHIP_START_TIME ]]; then
-		DIYSHIP_END_TIME=\$($TIME_COMMAND)
+		DIYSHIP_END_TIME=\$(date +%s%N)
 		export DIYSHIP_DURATION=\$((DIYSHIP_END_TIME - DIYSHIP_START_TIME))
 	fi
 
@@ -73,7 +71,7 @@ else
 	fi
 fi
 
-DIYSHIP_START_TIME=\$($TIME_COMMAND)
+DIYSHIP_START_TIME=\$(date +%s%N)
 
 export DIYSHIP_SHELL=\"bash\"
 "
@@ -83,7 +81,7 @@ zmodload zsh/parameter
 
 if [[ \$ZSH_VERSION == ([1-4]*) ]]; then
 	__diyship_get_time() {
-		DIYSHIP_CAPTURED_TIME=\$($TIME_COMMAND)
+		DIYSHIP_CAPTURED_TIME=\$(date +%s%N)
 	}
 else
 	zmodload zsh/datetime
@@ -144,7 +142,8 @@ VIRTUAL_ENV_DISABLE_PROMPT=1
 
 setopt promptsubst
 PROMPT='\$($DIYSHIP_COMMAND_LEFT)'
-RPROMPT='\$($DIYSHIP_COMMAND_RIGHT)'"
+RPROMPT='\$($DIYSHIP_COMMAND_RIGHT)'
+"
 
 FISH_INIT="
 function fish_prompt
@@ -266,11 +265,11 @@ local:cmd-end-time = 0
 local:cmd-duration = 0
 
 fn diyship-after-readline-hook [line]{
-	cmd-start-time = ($TIME_COMMAND)
+	cmd-start-time = (date +%s%N)
 }
 
 fn diyship-before-readline-hook {
-	cmd-end-time = ($TIME_COMMAND)
+	cmd-end-time = (date +%s%N)
 	cmd-duration = (- \$cmd-end-time \$cmd-start-time)
 }
 
@@ -278,27 +277,17 @@ edit:after-readline = [ \$@edit:after-readline \$diyship-after-readline-hook~ ]
 edit:before-readline = [ \$@edit:before-readline \$diyship-before-readline-hook~ ]
 
 edit:prompt = {
+	set-env DIYSHIP_DURATION \$cmd-duration
 	set-env DIYSHIP_JOBS \$num-bg-jobs
 
-	if (== \$cmd-start-time 0) {
-		$DIYSHIP_COMMAND_LEFT
-	} else {
-		set-env DIYSHIP_DURATION \$cmd-duration
-
-		$DIYSHIP_COMMAND_LEFT
-	}
+	$DIYSHIP_COMMAND_LEFT
 }
 
 edit:rprompt = {
+	set-env DIYSHIP_DURATION \$cmd-duration
 	set-env DIYSHIP_JOBS \$num-bg-jobs
 
-	if (== \$cmd-start-time 0) {
-		$DIYSHIP_COMMAND_RIGHT
-	} else {
-		set-env DIYSHIP_DURATION \$cmd-duration
-
-		$DIYSHIP_COMMAND_RIGHT
-	}
+	$DIYSHIP_COMMAND_RIGHT
 }"
 
 TCSH_INIT="
@@ -307,22 +296,22 @@ setenv DIYSHIP_SHELL tcsh;
 set USER_PRECMD = \"\`alias precmd\`\";
 set USER_POSTCMD = \"\`alias postcmd\`\";
 
-set DIYSHIP_PRECMD = 'set DIYSHIP_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_COMMAND_LEFT\";set DIYSHIP_END_TIME = \`$TIME_COMMAND\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_COMMAND_LEFT\`\";set DIYSHIP_START_TIME = -1';
-set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`$TIME_COMMAND\`';
+set DIYSHIP_PRECMD = 'set DIYSHIP_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_COMMAND_LEFT\";set DIYSHIP_END_TIME = \`date +%s%N\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_COMMAND_LEFT\`\";set DIYSHIP_START_TIME = -1';
+set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`date +%s%N\`';
 
 alias precmd \"\$DIYSHIP_PRECMD;\$USER_PRECMD\";
 alias postcmd \"\$DIYSHIP_POSTCMD;\$USER_POSTCMD\";
 
-set DIYSHIP_START_TIME = \`$TIME_COMMAND\`;
+set DIYSHIP_START_TIME = \`date +%s%N\`;
 "
 
 NUSHELL_INIT="
-let-env DIYSHIP_SHELL = \"nu\"
+let-env DIYSHIP_SHELL = \"nushell\"
 
 def diyship_prompt [] {
 	let-env DIYSHIP_DURATION = \$nu.env.CMD_DURATION_MS
 
-	^$DIYSHIP_COMMAND_LEFT PROMPT --cmd-duration \$nu.env.CMD_DURATION_MS
+	^$DIYSHIP_COMMAND_LEFT
 }
 "
 
