@@ -162,7 +162,7 @@ so you could utilize theme informations in your script/program:
 | `$DIYSHIP_JOBS`       | The number of currently running jobs                          |
 | `$DIYSHIP_KEYMAP`     | The current keymap.                                           |
 
-Do to many technical limitation, not every shell support all the features:
+Do to many technical limitation, not every shell support all features:
 
 | Feature              | Bash | Zsh | Fish | Powershell | Ion | Elvish | Tcsh | Nushell | Xonsh |
 | -------------------- | ---- | --- | ---- | ---------- | --- | ------ | ---- | ------- | ----- |
