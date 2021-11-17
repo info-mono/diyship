@@ -141,10 +141,10 @@ DIYship is basically execute a command (which could be a path to an **executable
 you can change the command through environment variable:<br>
 `export DIYSHIP_COMMAND_<POSITION>="<command>"`
 
-| Environment variable    | Default                          | Description                   |
-| ----------------------- | -------------------------------- | ----------------------------- |
-| `DIYSHIP_COMMAND_LEFT`  | `$XDG_CONFIG_HOME/diyship/left`  | Command to print left prompt  |
-| `DIYSHIP_COMMAND_RIGHT` | `$XDG_CONFIG_HOME/diyship/right` | Command to print right prompt |
+| Environment variable    | Default                          | Description                    |
+| ----------------------- | -------------------------------- | ------------------------------ |
+| `DIYSHIP_COMMAND_LEFT`  | `$XDG_CONFIG_HOME/diyship/left`  | Command to print left prompt.  |
+| `DIYSHIP_COMMAND_RIGHT` | `$XDG_CONFIG_HOME/diyship/right` | Command to print right prompt. |
 
 DIYship will export these following environment variables before running the commands to print out prompts,
 so you could utilize theme informations in your script/program:
