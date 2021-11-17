@@ -2,86 +2,90 @@
 
 
 # Values
-XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-DIYSHIP_COMMAND_LEFT="${DIYSHIP_COMMAND_LEFT:-$XDG_CONFIG_HOME/diyship/left}"
-DIYSHIP_COMMAND_RIGHT="${DIYSHIP_COMMAND_RIGHT:-$XDG_CONFIG_HOME/diyship/right}"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+DIYSHIP_COMMAND_LEFT="${DIYSHIP_COMMAND_LEFT:-${XDG_CONFIG_HOME}/diyship/left}"
+DIYSHIP_COMMAND_RIGHT="${DIYSHIP_COMMAND_RIGHT:-${XDG_CONFIG_HOME}/diyship/right}"
 
-BASH_INIT="
+TIMING_COMMAND="date +%s%N | cut -c '-13'"
+JOB_COUNT_COMMAND="wc -l"
+RETURN_WORKAROUND_COMMAND="cat"
+
+init_bash="
 diyship_preexec() {
-	local PREV_LAST_ARG=\$1
+	local PREV_LAST_ARG=\${1}
 
-	if [ \"\$DIYSHIP_PREEXEC_READY\" = \"true\" ]; then
+	if [ \"\${DIYSHIP_PREEXEC_READY}\" = \"true\" ]; then
 		DIYSHIP_PREEXEC_READY=false
-		DIYSHIP_START_TIME=\$(date +%s%N)
+		DIYSHIP_START_TIME=\$(${TIMING_COMMAND})
 	fi
 
-	: \"\$PREV_LAST_ARG\"
+	: \"\${PREV_LAST_ARG}\"
 }
 
 diyship_precmd() {
 	export DIYSHIP_STATUS=\$?
 
-	DIYSHIP_PIPESTATUS=(\${PIPESTATUS[@]})
+	DIYSHIP_PIPESTATUS_TEMPORARY=(\${PIPESTATUS[@]})
 	if [[ \"\${#BP_PIPESTATUS[@]}\" -gt \"\${#DIYSHIP_PIPESTATUS[@]}\" ]]; then
-		DIYSHIP_PIPESTATUS=(\${BP_PIPESTATUS[@]})
+		DIYSHIP_PIPESTATUS_TEMPORARY=(\${BP_PIPESTATUS[@]})
 	fi
-	export DIYSHIP_PIPESTATUS=\"\${DIYSHIP_PIPESTATUS[@]}\"
+	export DIYSHIP_PIPESTATUS=\${DIYSHIP_PIPESTATUS_TEMPORARY[@]}
 
 	DIYSHIP_JOBS=0
 	for job in \$(jobs -p); do
-		[[ \$job ]] && ((DIYSHIP_JOBS++))
+		[[ \${job} ]] && ((DIYSHIP_JOBS++))
 	done
-	export DIYSHIP_JOBS=\"\$DIYSHIP_JOBS\"
+	export DIYSHIP_JOBS=\"\${DIYSHIP_JOBS}\"
 
 	\"\${diyship_precmd_user_func-:}\"
 
-	eval \"\$_PRESERVED_PROMPT_COMMAND\"
+	eval \"\${_PRESERVED_PROMPT_COMMAND}\"
 
-	if [[ \$DIYSHIP_START_TIME ]]; then
-		DIYSHIP_END_TIME=\$(date +%s%N)
+	if [[ \${DIYSHIP_START_TIME} ]]; then
+		DIYSHIP_END_TIME=\$(${TIMING_COMMAND})
 		export DIYSHIP_DURATION=\$((DIYSHIP_END_TIME - DIYSHIP_START_TIME))
 	fi
 
-	PS1=\"\$($DIYSHIP_COMMAND_LEFT)\"
+	PS1='\$(${DIYSHIP_COMMAND_LEFT})'
 
 	unset DIYSHIP_START_TIME
 	DIYSHIP_PREEXEC_READY=true
 }
 
-if [[ \"\${__bp_imported:-}\" == \"defined\" || \$preexec_functions || \$precmd_functions ]]; then
+if [[ \"\${__bp_imported:-}\" == \"defined\" || \${preexec_functions} || \${precmd_functions} ]]; then
 	diyship_preexec_all(){ diyship_preexec \"\$_\"; }
 	preexec_functions+=(diyship_preexec_all)
 	precmd_functions+=(diyship_precmd)
 else
 	dbg_trap=\"\$(trap -p DEBUG | cut -d' ' -f3 | tr -d \')\"
-	if [[ -z \"\$dbg_trap\" ]]; then
+	if [[ -z \"\${dbg_trap}\" ]]; then
 		trap 'diyship_preexec \"\$_\"' DEBUG
-	elif [[ \"\$dbg_trap\" != 'diyship_preexec \"\$_\"' && \"\$dbg_trap\" != 'diyship_preexec_all \"\$_\"' ]]; then
+	elif [[ \"\${dbg_trap}\" != 'diyship_preexec \"\$_\"' && \"\${dbg_trap}\" != 'diyship_preexec_all \"\$_\"' ]]; then
 		diyship_preexec_all() {
-			local PREV_LAST_ARG=\$1 ; \$dbg_trap; diyship_preexec; : \"\$PREV_LAST_ARG\";
+			local PREV_LAST_ARG=\${1} ; \${dbg_trap}; diyship_preexec; : \"\${PREV_LAST_ARG}\";
 		}
 		trap 'diyship_preexec_all \"\$_\"' DEBUG
 	fi
 
-	if [[ -z \"\$PROMPT_COMMAND\" ]]; then
+	if [[ -z \"\${PROMPT_COMMAND}\" ]]; then
 		PROMPT_COMMAND=\"diyship_precmd\"
-	elif [[ \"\$PROMPT_COMMAND\" != *\"diyship_precmd\"* ]]; then
-		_PRESERVED_PROMPT_COMMAND=\"\$PROMPT_COMMAND\"
+	elif [[ \"\${PROMPT_COMMAND}\" != *\"diyship_precmd\"* ]]; then
+		_PRESERVED_PROMPT_COMMAND=\"\${PROMPT_COMMAND}\"
 		PROMPT_COMMAND=\"diyship_precmd\"
 	fi
 fi
 
-DIYSHIP_START_TIME=\$(date +%s%N)
+DIYSHIP_START_TIME=\$(${TIMING_COMMAND})
 
 export DIYSHIP_SHELL=\"bash\"
 "
 
-ZSH_INIT="
+init_zsh="
 zmodload zsh/parameter
 
 if [[ \$ZSH_VERSION == ([1-4]*) ]]; then
 	__diyship_get_time() {
-		DIYSHIP_CAPTURED_TIME=\$(date +%s%N)
+		DIYSHIP_CAPTURED_TIME=\$(${TIMING_COMMAND})
 	}
 else
 	zmodload zsh/datetime
@@ -93,7 +97,9 @@ fi
 
 diyship_precmd() {
 	export DIYSHIP_STATUS=\$?
-	export DIYSHIP_PIPESTATUS=\"\${pipestatus[@]}\"
+
+	DIYSHIP_PIPESTATUS_TEMPORARY=(\${pipestatus[@]})
+	export DIYSHIP_PIPESTATUS=\${DIYSHIP_PIPESTATUS_TEMPORARY[@]}
 
 	if (( \${+DIYSHIP_START_TIME} )); then
 		__diyship_get_time && (( DIYSHIP_DURATION = DIYSHIP_CAPTURED_TIME - DIYSHIP_START_TIME )) && export DIYSHIP_DURATION=\"\$DIYSHIP_DURATION\"
@@ -120,6 +126,8 @@ if [[ -z \${preexec_functions[(re)diyship_preexec]} ]]; then
 fi
 
 diyship_zle-keymap-select() {
+	export DIYSHIP_KEYMAP=\"\$KEYMAP\"
+
 	zle reset-prompt
 }
 
@@ -141,11 +149,11 @@ export DIYSHIP_SHELL=\"zsh\"
 VIRTUAL_ENV_DISABLE_PROMPT=1
 
 setopt promptsubst
-PROMPT='\$($DIYSHIP_COMMAND_LEFT)'
-RPROMPT='\$($DIYSHIP_COMMAND_RIGHT)'
+PROMPT='\$(${DIYSHIP_COMMAND_LEFT})'
+RPROMPT='\$(${DIYSHIP_COMMAND_RIGHT})'
 "
 
-FISH_INIT="
+init_fish="
 function fish_prompt
 	set -gx DIYSHIP_STATUS \$status
 	set -gx DIYSHIP_PIPESTATUS \$pipestatus
@@ -159,11 +167,11 @@ function fish_prompt
 			set -gx DIYSHIP_KEYMAP insert
 	end
 
-	$DIYSHIP_COMMAND_LEFT
+	${DIYSHIP_COMMAND_LEFT}
 end
 
 function fish_right_prompt
-	$DIYSHIP_COMMAND_RIGHT
+	${DIYSHIP_COMMAND_RIGHT}
 end
 
 set -g VIRTUAL_ENV_DISABLE_PROMPT 1
@@ -173,7 +181,7 @@ builtin functions -e fish_mode_prompt
 set -gx DIYSHIP_SHELL \"fish\"
 "
 
-POWERSHELL_INIT="
+init_powershell="
 #!/usr/bin/env pwsh
 
 function global:prompt {
@@ -224,7 +232,7 @@ function global:prompt {
 		\$ENV:DIYSHIP_DURATION = [math]::Round((\$lastCmd.EndExecutionTime - \$lastCmd.StartExecutionTime).TotalMilliseconds)
 	}
 
-	Invoke-Native -Executable '$DIYSHIP_COMMAND_LEFT'
+	Invoke-Native -Executable '${DIYSHIP_COMMAND_LEFT}'
 
 	\$global:LASTEXITCODE = \$origLastExitCode
 
@@ -243,20 +251,20 @@ function global:prompt {
 \$ENV:DIYSHIP_SHELL = \"powershell\"
 "
 
-ION_INIT="
+init_ion="
 fn PROMPT
 	export DIYSHIP_STATUS = \$?
 	export DIYSHIP_DURATION = \$or(\$CMD_DURATION \$ION_CMD_DURATION)
 	export DIYSHIP_DURATION = \$((DIYSHIP_DURATION * 1000))
-	export DIYSHIP_JOBS = \$(jobs ^| wc -l)
+	export DIYSHIP_JOBS = \$(jobs ^| ${JOB_COUNT_COMMAND})
 
-	$DIYSHIP_COMMAND_LEFT
+	${DIYSHIP_COMMAND_LEFT}
 end
 
 export DIYSHIP_SHELL=\"ion\"
 "
 
-ELVISH_INIT="
+init_elvish="
 set-env DIYSHIP_SHELL \"elvish\"
 
 # Define Hooks
@@ -265,11 +273,11 @@ local:cmd-end-time = 0
 local:cmd-duration = 0
 
 fn diyship-after-readline-hook [line]{
-	cmd-start-time = (date +%s%N)
+	cmd-start-time = (${TIMING_COMMAND})
 }
 
 fn diyship-before-readline-hook {
-	cmd-end-time = (date +%s%N)
+	cmd-end-time = (${TIMING_COMMAND})
 	cmd-duration = (- \$cmd-end-time \$cmd-start-time)
 }
 
@@ -277,45 +285,45 @@ edit:after-readline = [ \$@edit:after-readline \$diyship-after-readline-hook~ ]
 edit:before-readline = [ \$@edit:before-readline \$diyship-before-readline-hook~ ]
 
 edit:prompt = {
-	set-env DIYSHIP_DURATION \$cmd-duration
+	set-env DIYSHIP_DURATION (to-string \$cmd-duration)
 	set-env DIYSHIP_JOBS \$num-bg-jobs
 
-	$DIYSHIP_COMMAND_LEFT
+	${DIYSHIP_COMMAND_LEFT}
 }
 
 edit:rprompt = {
-	set-env DIYSHIP_DURATION \$cmd-duration
+	set-env DIYSHIP_DURATION (to-string \$cmd-duration)
 	set-env DIYSHIP_JOBS \$num-bg-jobs
 
-	$DIYSHIP_COMMAND_RIGHT
+	${DIYSHIP_COMMAND_RIGHT}
 }"
 
-TCSH_INIT="
+init_tcsh="
 setenv DIYSHIP_SHELL tcsh;
 
 set USER_PRECMD = \"\`alias precmd\`\";
 set USER_POSTCMD = \"\`alias postcmd\`\";
 
-set DIYSHIP_PRECMD = 'set DIYSHIP_STATUS = \$status;set DIYSHIP_PATH = \"$DIYSHIP_COMMAND_LEFT\";set DIYSHIP_END_TIME = \`date +%s%N\`;set DIYSHIP_DURATION = 0;if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME;set prompt = \"\`\$DIYSHIP_COMMAND_LEFT\`\";set DIYSHIP_START_TIME = -1';
-set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`date +%s%N\`';
+set DIYSHIP_PRECMD = 'setenv DIYSHIP_STATUS \$status; set DIYSHIP_PATH = \"${DIYSHIP_COMMAND_LEFT}\"; set DIYSHIP_END_TIME = \`${TIMING_COMMAND}\`; set DIYSHIP_DURATION_TEMPORARY = 0; if ( \$DIYSHIP_START_TIME != -1 ) @ DIYSHIP_DURATION_TEMPORARY = \$DIYSHIP_END_TIME - \$DIYSHIP_START_TIME; setenv DIYSHIP_DURATION \$DIYSHIP_DURATION_TEMPORARY; set prompt = \"\`${DIYSHIP_COMMAND_LEFT}\`\"; set DIYSHIP_START_TIME = -1';
+set DIYSHIP_POSTCMD = 'set DIYSHIP_START_TIME = \`${TIMING_COMMAND}\`';
 
 alias precmd \"\$DIYSHIP_PRECMD;\$USER_PRECMD\";
 alias postcmd \"\$DIYSHIP_POSTCMD;\$USER_POSTCMD\";
 
-set DIYSHIP_START_TIME = \`date +%s%N\`;
+set DIYSHIP_START_TIME = \`${TIMING_COMMAND}\`;
 "
 
-NUSHELL_INIT="
+init_nushell="
 let-env DIYSHIP_SHELL = \"nushell\"
 
 def diyship_prompt [] {
 	let-env DIYSHIP_DURATION = \$nu.env.CMD_DURATION_MS
 
-	^$DIYSHIP_COMMAND_LEFT
+	^${DIYSHIP_COMMAND_LEFT}
 }
 "
 
-XONSH_INIT="
+init_xonsh="
 def diyship_prompt():
 	last_cmd = __xonsh__.history[-1] if __xonsh__.history else None
 
@@ -323,7 +331,7 @@ def diyship_prompt():
 	\$DIYSHIP_DURATION = round((last_cmd.ts[1] - last_cmd.ts[0]) * 1000) if last_cmd else 0
 	\$DIYSHIP_JOBS = sum(1 for job in __xonsh__.all_jobs.values() if job['obj'] and job['obj'].poll() is None)
 
-	return \$($DIYSHIP_COMMAND_LEFT | cat)
+	return \$(${DIYSHIP_COMMAND_LEFT} | ${RETURN_WORKAROUND_COMMAND})
 
 \$PROMPT = diyship_prompt
 
@@ -331,22 +339,15 @@ def diyship_prompt():
 "
 
 # Start
-case "$1" in
-	'bash')       printf '%s'       "$BASH_INIT" ;;
-	'zsh')        printf '%s'        "$ZSH_INIT" ;;
-	'fish')       printf '%s'       "$FISH_INIT" ;;
-	'powershell') printf '%s' "$POWERSHELL_INIT" ;;
-	'ion')        printf '%s'        "$ION_INIT" ;;
-	'elvish')     printf '%s'     "$ELVISH_INIT" ;;
-	'tcsh')       printf '%s'       "$TCSH_INIT" ;;
-	'nushell')    printf '%s'    "$NUSHELL_INIT" ;;
-	'xonsh')      printf '%s'      "$XONSH_INIT" ;;
-	*)
-		printf '%s\n' "diyship: invalid shell -- '$SUBCOMMAND'" >&2
+eval "init=\$init_${1}"
 
-		exit 1
-	;;
-esac
+if [ -n "${init}" ]; then
+	printf '%s' "${init}"
+else
+	printf '%s\n' "diyship: invalid shell '${1}'." >&2
+
+	exit 1
+fi
 
 
 exit 0

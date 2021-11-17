@@ -12,7 +12,10 @@
 
 ### 🧾 Dependencies
 
-- [Unix commands](https://en.wikipedia.org/wiki/List_of_Unix_commands) to process.
+- [`sh`](https://wikipedia.org/wiki/Bourne_shell) to process.
+- [`date`](https://wikipedia.org/wiki/Unix_time) and [`cut`](https://wikipedia.org/wiki/Cut_(Unix)) for timing (required by Bash, Zsh, Elvish and Tcsh).
+- [`wc`](https://wikipedia.org/wiki/Wc_(Unix)) for job counting (required by Ion).
+- [`cat`](https://wikipedia.org/wiki/Cat_(Unix)) for return workaround (required by Xonsh).
 
 ### 📥 Installation
 
@@ -65,7 +68,7 @@ eval "$(diyship bash)"
 Add the following to the end of `~/.zshrc`:
 
 ```zsh
-source <(diyship zsh)
+eval "$(diyship zsh)"
 ```
 
 ### 🐚 Fish
@@ -99,7 +102,7 @@ eval $(diyship ion)
 Add the following to the end of `~/.elvish/rc.elv`:
 
 ```elv
-eval (diyship elvish)
+eval (diyship elvish | slurp)
 ```
 
 > _Only Elvish v0.15 or higher is supported._
@@ -122,6 +125,7 @@ startup = [
 	"diyship nushell | save ~/.cache/diyship/init.nu",
 	"source ~/.cache/diyship/init.nu"
 ]
+
 prompt = "diyship_prompt"
 ```
 
