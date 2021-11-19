@@ -175,6 +175,8 @@ Do to many technical limitation, not every shell support all features:
 | Export jobs          | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     |      |         | ✅    |
 | Export keymap        |      | ✅  | ✅   |            |     |        |      |         |       |
 
+> _For more documentation and inspiration about writing your own prompt, checkout [ours wiki](https://github.com/info-mono/diyship/wiki) and [Starship's custom modules](https://github.com/starship/starship/discussions/1252)._
+
 ## 💌 Credits
 
 This project was heavily based on and inspired by [**Starship**](https://starship.rs).
