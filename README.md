@@ -1,4 +1,4 @@
-<h1 align="center">DIYship</h1>
+<p align="center"><a href="https://www.figma.com/file/ivfF5xzAi1zioAkpDHbUyb/DIYship"><img src="https://user-images.githubusercontent.com/43980777/142657083-ec10c6a1-b34b-4517-9110-3d07f7263a63.png"></a></p>
 <p align="center">Cross-shell prompt framework</p>
 <p align="center"><a href="https://github.com/info-mono/diyship/blob/main/LICENSE"><img src="https://img.shields.io/github/license/info-mono/diyship?labelColor=383838&color=585858&style=for-the-badge" alt="License: GPL-3.0"></a> <a href="https://gist.github.com/NNBnh/9ef453aba3efce26046e0d3119dab5a7#active-development"><img src="https://img.shields.io/github/last-commit/info-mono/diyship?labelColor=383838&color=585858&style=for-the-badge" alt="Active development"></a></p>
 
