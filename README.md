@@ -4,7 +4,7 @@
 
 ## 💡 About
 
-**DIYship** is a cross-shell prompt framework written in [`portable sh`](https://github.com/dylanaraps/pure-sh-bible) that let you write your prompt with any programing language for any shell.
+**DIYship** is a cross-shell prompt framework that let you write your prompt with any programing language for any shell.
 
 > _[Learn more about how its work](#%EF%B8%8F-configuration)._
 
@@ -12,44 +12,23 @@
 
 ### 🧾 Dependencies
 
-- [`sh`](https://wikipedia.org/wiki/Bourne_shell) to process.
 - [`date`](https://wikipedia.org/wiki/Unix_time) and [`cut`](https://wikipedia.org/wiki/Cut_(Unix)) for timing (required by Bash, Zsh, Elvish and Tcsh).
 - [`wc`](https://wikipedia.org/wiki/Wc_(Unix)) for job counting (required by Ion).
 - [`cat`](https://wikipedia.org/wiki/Cat_(Unix)) for return workaround (required by Xonsh).
 
 ### 📥 Installation
 
-#### 🔧 Manually
-
 Option 1: using `curl`
 
 ```sh
 curl https://raw.githubusercontent.com/info-mono/diyship/main/bin/diyship > ~/.local/bin/diyship
-chmod +x ~/.local/bin/diyship
 ```
 
 Option 2: using `git`
 
 ```sh
 git clone https://github.com/info-mono/diyship.git ~/.local/share/diyship
-ln -s ~/.local/share/diyship/bin/diyship ~/.local/bin/diyship
 ```
-
-#### 📦 Package manager
-
-For [`bpkg`](https://github.com/bpkg/bpkg) user:
-
-```sh
-bpkg install info-mono/diyship
-```
-
-For [Basher](https://github.com/bpkg/bpkg) user:
-
-```sh
-basher install info-mono/diyship
-```
-
-> _If you can and want to port DIYship to other package managers, feel free to do so._
 
 ## ⌨️ Usage
 
