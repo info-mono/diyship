@@ -1,7 +1,0 @@
-{
-  "name": "diyship",
-  "version": "1.0.0",
-  "description": "Cross-shell prompt framework",
-  "global": "true",
-  "install": "make install"
-}
