@@ -15,7 +15,7 @@
 
 ### 📥 Installation
 
-_#TODO_
+To install DIYship to your shell, simply append the correspond code file on this repo to your shell config file.
 
 #### 🐚 Bash
 
@@ -78,8 +78,7 @@ curl https://raw.githubusercontent.com/info-mono/diyship/main/xonsh >> ~/.xonshr
 ### ⚙️ Configuration
 
 DIYship is basically execute a command (which could be a path to an executable script file or program) and take it output as a prompt,
-you can change the command through variable:<br>
-`DIYSHIP_COMMAND_<POSITION>="<command>"`
+you can change the command through variable:
 
 | Environment variable    | Description                    |
 | ----------------------- | ------------------------------ |
