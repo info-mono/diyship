@@ -1,6 +1,9 @@
 <p align="center"><a href="https://www.figma.com/file/ivfF5xzAi1zioAkpDHbUyb/DIYship"><img src="https://user-images.githubusercontent.com/43980777/142657083-ec10c6a1-b34b-4517-9110-3d07f7263a63.png"></a></p>
 <p align="center">Cross-shell prompt framework</p>
-<p align="center"><a href="https://github.com/info-mono/diyship/blob/main/LICENSE"><img src="https://img.shields.io/github/license/info-mono/diyship?labelColor=383838&color=585858&style=for-the-badge" alt="License: GPL-3.0"></a> <a href="https://gist.github.com/NNBnh/9ef453aba3efce26046e0d3119dab5a7#development-completed"><img src="https://img.shields.io/badge/development-completed-%23585858.svg?labelColor=383838&style=for-the-badge&logoColor=FFFFFF" alt="Development completed"></a></p>
+<p align="center">
+  <a href="https://github.com/info-mono/diyship/blob/main/LICENSE"><img src="https://img.shields.io/github/license/info-mono/diyship?labelColor=383838&color=585858&style=for-the-badge" alt="License: GPL-3.0"></a>
+  <a href="https://gist.github.com/NNBnh/9ef453aba3efce26046e0d3119dab5a7#development-completed"><img src="https://img.shields.io/badge/development-completed-%23585858.svg?labelColor=383838&style=for-the-badge&logoColor=FFFFFF" alt="Development completed"></a>
+</p>
 
 ## 💡 About
 
@@ -10,124 +13,80 @@
 
 ## 🚀 Setup
 
-### 🧾 Dependencies
-
-- [`date`](https://wikipedia.org/wiki/Unix_time) and [`cut`](https://wikipedia.org/wiki/Cut_(Unix)) for timing (required by Bash, Zsh, Elvish and Tcsh).
-- [`wc`](https://wikipedia.org/wiki/Wc_(Unix)) for job counting (required by Ion).
-- [`cat`](https://wikipedia.org/wiki/Cat_(Unix)) for return workaround (required by Xonsh).
-
 ### 📥 Installation
 
-Option 1: using `curl`
+_#TODO_
+
+#### 🐚 Bash
 
 ```sh
-curl https://raw.githubusercontent.com/info-mono/diyship/main/bin/diyship > ~/.local/bin/diyship
+curl https://raw.githubusercontent.com/info-mono/diyship/main/bash >> ~/.bashrc
 ```
 
-Option 2: using `git`
+#### 🐚 Zsh
 
 ```sh
-git clone https://github.com/info-mono/diyship.git ~/.local/share/diyship
+curl https://raw.githubusercontent.com/info-mono/diyship/main/zshrc >> ~/.zshrc
 ```
 
-## ⌨️ Usage
+#### 🐚 Fish
 
-Add the init script to your shell's config file:
-
-### 🐚 Bash
-
-Add the following to the end of `~/.bashrc`:
-
-```bash
-eval "$(diyship bash)"
+```sh
+curl https://raw.githubusercontent.com/info-mono/diyship/main/fish >> ~/.config/fish/config.fish
 ```
 
-### 🐚 Zsh
+#### 🐚 PowerShell
 
-Add the following to the end of `~/.zshrc`:
-
-```zsh
-eval "$(diyship zsh)"
+```sh
+curl https://raw.githubusercontent.com/info-mono/diyship/main/powerShell >> ~/.config/powershell/Microsoft.PowerShell_profile.ps1
 ```
 
-### 🐚 Fish
+#### 🐚 Ion
 
-Add the following to the end of `~/.config/fish/config.fish`:
-
-```fish
-diyship fish | source
+```sh
+curl https://raw.githubusercontent.com/info-mono/diyship/main/ion >> ~/.config/ion/initrc
 ```
 
-### 🐚 PowerShell
+#### 🐚 Elvish
 
-Add the following to the end of `Microsoft.PowerShell_profile.ps1`.
-You can check the location of this file by querying the `$PROFILE` variable in PowerShell.
-Typically the path is `~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1` or `~/.config/powershell/Microsoft.PowerShell_profile.ps1` on `*nix`.
-
-```powershell
-Invoke-Expression (@(&diyship powershell) -join "`n")
-```
-
-### 🐚 Ion
-
-Add the following to the end of `~/.config/ion/initrc`:
-
-```ion
-eval $(diyship ion)
-```
-
-### 🐚 Elvish
-
-Add the following to the end of `~/.elvish/rc.elv`:
-
-```elv
-eval (diyship elvish | slurp)
+```sh
+curl https://raw.githubusercontent.com/info-mono/diyship/main/elvish >> ~/.elvish/rc.elv
 ```
 
 > _Only Elvish v0.15 or higher is supported._
 
-### 🐚 Tcsh
+#### 🐚 Tcsh
 
-Add the following to the end of `~/.tcshrc`:
-
-```tcsh
-eval `diyship tcsh`
+```sh
+curl https://raw.githubusercontent.com/info-mono/diyship/main/tcsh >> ~/.tcshrc
 ```
 
-### 🐚 Nushell
+#### 🐚 Nushell
 
-Add the following to your Nushell config file. You can check the location of this file by running `config path` in Nushell.
-
-```toml
-startup = [
-	"mkdir ~/.cache/diyship",
-	"diyship nushell | save ~/.cache/diyship/init.nu",
-	"source ~/.cache/diyship/init.nu"
-]
-
-prompt = "diyship_prompt"
+```sh
+curl https://raw.githubusercontent.com/info-mono/diyship/main/nushell >> ~/.config/nu/config.toml
 ```
 
-### 🐚 Xonsh
+#### 🐚 Xonsh
 
-Add the following to the end of `~/.xonshrc`:
-
-```xsh
-execx($(diyship xonsh))
+```sh
+curl https://raw.githubusercontent.com/info-mono/diyship/main/xonsh >> ~/.xonshrc
 ```
 
 > _Only Nushell version v0.33 or higher is supported._
 
-## ⚙️ Configuration
+### ⚙️ Configuration
 
-DIYship is basically execute a command (which could be a path to an **executable** script file or program) and take it output as a prompt,
-you can change the command through environment variable:<br>
-`export DIYSHIP_COMMAND_<POSITION>="<command>"`
+DIYship is basically execute a command (which could be a path to an executable script file or program) and take it output as a prompt,
+you can change the command through variable:<br>
+`DIYSHIP_COMMAND_<POSITION>="<command>"`
 
-| Environment variable    | Default                          | Description                    |
-| ----------------------- | -------------------------------- | ------------------------------ |
-| `DIYSHIP_COMMAND_LEFT`  | `$XDG_CONFIG_HOME/diyship/left`  | Command to print left prompt.  |
-| `DIYSHIP_COMMAND_RIGHT` | `$XDG_CONFIG_HOME/diyship/right` | Command to print right prompt. |
+| Environment variable    | Description                    |
+| ----------------------- | ------------------------------ |
+| `DIYSHIP_COMMAND_LEFT`  | Command to print left prompt.  |
+| `DIYSHIP_COMMAND_RIGHT` | Command to print right prompt. |
+
+> _TIP: You can disable right prompt by `DIYSHIP_COMMAND_RIGHT="test"`_
 
 DIYship will export these following environment variables before running the commands to print out prompts,
 so you could utilize theme informations in your script/program:
@@ -146,7 +105,7 @@ Do to many technical limitation, not every shell support all features:
 | Feature              | Bash | Zsh | Fish | Powershell | Ion | Elvish | Tcsh | Nushell | Xonsh |
 | -------------------- | ---- | --- | ---- | ---------- | --- | ------ | ---- | ------- | ----- |
 | Left prompt          | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     | ✅   | ✅      | ✅    |
-| Right prompt         |      | ✅  | ✅   |            |     | ✅     |      |         |       |
+| Right prompt         |      | ✅  | ✅   |            |     | ✅     |      |         | ✅    |
 | Export current shell | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     | ✅   | ✅      | ✅    |
 | Export status        | ✅   | ✅  | ✅   | ✅         | ✅  |        | ✅   |         | ✅    |
 | Export pipe status   | ✅   | ✅  | ✅   |            |     |        |      |         |       |

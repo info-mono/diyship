@@ -1,0 +1,69 @@
+# DIYship {{{
+
+$ENV:VIRTUAL_ENV_DISABLE_PROMPT = 1
+
+$ENV:DIYSHIP_SHELL = "powershell"
+
+function global:prompt {
+
+	function Invoke-Native {
+		param($Executable, $Arguments)
+		$startInfo = [System.Diagnostics.ProcessStartInfo]::new($Executable);
+		$startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8;
+		$startInfo.RedirectStandardOutput = $true;
+		$startInfo.RedirectStandardError = $true;
+		$startInfo.CreateNoWindow = $true;
+		$startInfo.UseShellExecute = $false;
+		if ($startInfo.ArgumentList.Add) {
+			foreach ($arg in $Arguments) {
+				$startInfo.ArgumentList.Add($arg);
+			}
+		}
+		else {
+			$escaped = $Arguments | ForEach-Object {
+				$s = $_ -Replace '(\+)"','$1$1"';
+				$s = $s -Replace '(\+)$','$1$1';
+				$s = $s -Replace '"','\"';
+				"`"$s`""
+			}
+			$startInfo.Arguments = $escaped -Join ' ';
+		}
+		$process = [System.Diagnostics.Process]::Start($startInfo)
+
+		$stderr = $process.StandardError.ReadToEnd().Trim()
+		if ($stderr -ne '') {
+			$host.ui.WriteErrorLine($stderr)
+		}
+
+		$process.StandardOutput.ReadToEnd();
+	}
+
+	$origDollarQuestion = $global:?
+	$origLastExitCode = $global:LASTEXITCODE
+
+	$ENV:DIYSHIP_JOBS = @(Get-Job | Where-Object { $_.State -eq 'Running' }).Count
+
+	$ENV:DIYSHIP_STATUS = 0
+	if ($lastCmd = Get-History -Count 1) {
+		if (-not $origDollarQuestion) {
+			$lastCmdletError = try { $error[0] |  Where-Object { $_ -ne $null } | Select-Object -ExpandProperty InvocationInfo } catch { $null }
+			$ENV:DIYSHIP_STATUS = if ($null -ne $lastCmdletError -and $lastCmd.CommandLine -eq $lastCmdletError.Line) { 1 } else { $origLastExitCode }
+		}
+		$ENV:DIYSHIP_DURATION = [math]::Round(($lastCmd.EndExecutionTime - $lastCmd.StartExecutionTime).TotalMilliseconds)
+	}
+
+	Invoke-Native -Executable $DIYSHIP_COMMAND_LEFT
+
+	$global:LASTEXITCODE = $origLastExitCode
+
+	if ($global:? -ne $origDollarQuestion) {
+		if ($origDollarQuestion) {
+			1+1
+		} else {
+			Write-Error '' -ErrorAction 'Ignore'
+		}
+	}
+
+}
+
+# }}}

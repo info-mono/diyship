@@ -1,0 +1,11 @@
+# DIYship {{{
+
+let-env DIYSHIP_SHELL = "nushell"
+
+def diyship_prompt [] {
+	let-env DIYSHIP_DURATION = $nu.env.CMD_DURATION_MS
+
+	^$DIYSHIP_COMMAND_LEFT
+}
+
+# }}}

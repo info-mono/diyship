@@ -1,0 +1,14 @@
+# DIYship {{{
+
+export DIYSHIP_SHELL="ion"
+
+fn PROMPT
+	export DIYSHIP_STATUS = $?
+	export DIYSHIP_DURATION = $or($CMD_DURATION $ION_CMD_DURATION)
+	export DIYSHIP_DURATION = $((DIYSHIP_DURATION * 1000))
+	export DIYSHIP_JOBS = $(jobs ^| wc -l)
+
+	$DIYSHIP_COMMAND_LEFT
+end
+
+# }}}

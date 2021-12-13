@@ -1,0 +1,14 @@
+# DIYship {{{
+
+$DIYSHIP_SHELL = "xonsh"
+
+@events.on_postcommand
+def diyship_prompt(cmd, rtn, out, ts, **kw):
+	$DIYSHIP_STATUS = rtn
+	$DIYSHIP_DURATION = round((ts[1] - ts[0]) * 1000)
+	$DIYSHIP_JOBS = sum(1 for job in __xonsh__.all_jobs.values() if job['obj'] and job['obj'].poll() is None)
+
+$PROMPT       = lambda: $($DIYSHIP_COMMAND_LEFT)
+$RIGHT_PROMPT = lambda: $($DIYSHIP_COMMAND_RIGHT)
+
+# }}}
