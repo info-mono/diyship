@@ -9,7 +9,7 @@
 
 **DIYship** is a cross-shell prompt framework that let you write your prompt with any programing language for any shell.
 
-> _[Learn more about how its work](#%EF%B8%8F-configuration)._
+> [Learn more about how its work](#%EF%B8%8F-configuration).
 
 ## 🚀 Setup
 
@@ -53,7 +53,7 @@ curl https://raw.githubusercontent.com/info-mono/diyship/main/ion >> ~/.config/i
 curl https://raw.githubusercontent.com/info-mono/diyship/main/elvish >> ~/.elvish/rc.elv
 ```
 
-> _Only Elvish v0.15 or higher is supported._
+> **Warning** Only Elvish v0.18 or higher is supported.
 
 #### 🐚 Tcsh
 
@@ -73,7 +73,7 @@ curl https://raw.githubusercontent.com/info-mono/diyship/main/nushell >> ~/.conf
 curl https://raw.githubusercontent.com/info-mono/diyship/main/xonsh >> ~/.xonshrc
 ```
 
-> _Only Nushell version v0.33 or higher is supported._
+> **Warning** Only Nushell version v0.33 or higher is supported.
 
 ### ⚙️ Configuration
 
@@ -85,7 +85,7 @@ you can change the command through variable:
 | `DIYSHIP_COMMAND_LEFT`  | Command to print left prompt.  |
 | `DIYSHIP_COMMAND_RIGHT` | Command to print right prompt. |
 
-> _TIP: You can disable right prompt by `DIYSHIP_COMMAND_RIGHT="test"`_
+> **Note** You can disable right prompt by `DIYSHIP_COMMAND_RIGHT="test"`
 
 DIYship will export these following environment variables before running the commands to print out prompts,
 so you could utilize theme informations in your script/program:
@@ -112,7 +112,7 @@ Do to many technical limitation, not every shell support all features:
 | Export jobs          | ✅   | ✅  | ✅   | ✅         | ✅  | ✅     |      |         | ✅    |
 | Export keymap        |      | ✅  | ✅   |            |     |        |      |         |       |
 
-> _For more documentation and inspiration about writing your own prompt, checkout [ours wiki](https://github.com/info-mono/diyship/wiki) and [Starship's custom modules](https://github.com/starship/starship/discussions/1252)._
+> **Note** For more documentation and inspiration about writing your own prompt, checkout [ours wiki](https://github.com/info-mono/diyship/wiki) and [Starship's custom modules](https://github.com/starship/starship/discussions/1252).
 
 ## 💌 Credits
 
